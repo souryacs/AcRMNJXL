@@ -1,12 +1,12 @@
 *********************************
-AcRMNJXL
+AcRNJXL
 *********************************
 
 ******************************
 Species tree estimation using mode based accumulated coalescence rank and extra gene leaves information
 ******************************
 
-AcRMNJXL is a python based tool for computing species tree from a set of incongruent gene trees 
+AcRNJXL is a python based tool for computing species tree from a set of incongruent gene trees 
 with Incomplete Lineage Sorting (ILS). One of the following measures between individual couplets are compurted 
 for species tree estimation.
 
@@ -39,25 +39,6 @@ Output
 A species tree covering all the taxa of the gene trees. Output species tree 
 is generated in the NEWICK format.
 
-Methods implemented
-------------------------------
-
-We have implemented following 3 kinds of methods for species tree estimation, of which 2 are 
-novel contributions, and one is a custom implementation of a reference approach.
-
-A) AcRNJ: This method defines accumulated coalescence rank between individual couplets, 
-and computes them using individual gene trees. The average values of these accumulated coalescence ranks for individual 
-couplets are then used in NJ (Neighbor Joining), to produce the final species tree. 
-
-B) AcRMNJ: Here, instead of simple averaging of earlier accumulated coalescence rank measure (between individual couplets), 
-we propose to use a mode based averaging of the accumulated coalescence rank measure. Such modified average of the accumulated coalescence ranks are 
-used to generate the species tree, using distance matrix based phylogeny construction.
-
-C) AcRMNJXL: Here, mode based average accumulated coalescence rank for individual couplets are augmented with couplet based average 
-extra gene leaves information, computed with respect to the input gene trees. Combination of both features generates the distance matrix 
-D, for subsequent NJ based species tree generation.
-
-
 *********************************
 Dependencies
 *********************************
@@ -77,7 +58,7 @@ We plan to support Python 3 environment in some future release.
 
 Note: there is a new release of Dendropy 4.0 but we have used 3.12.0 for the implementation. We 
 did not upgrade the code for Dendropy 4.0 support, so any user having this new version of Dendropy 
-might need to check the functionalities of AcRMNJXL and possibly upgrade / replace / edit few 
+might need to check the functionalities of AcRNJXL and possibly upgrade / replace / edit few 
 dendropy related functions. So, we recommend users to use the earlier version of Dendropy, to avoid any conflict.
 
 Support for Dendropy 4 and corresponding update of code will be done in a future release.
@@ -91,11 +72,11 @@ Numpy module in it. We found that Numpy module in the traditional Apt-Get reposi
 Command line options
 ****************
 
-After downloading the current archieve in a zipped format, extracting the archieve reveals a file MNJSTXL.py which 
+After downloading the current archieve in a zipped format, extracting the archieve reveals a file AcRMNJXL.py which 
 is the main executable file. Assuming current directory contains this python file, 
 following command is to be executed:
 
-./AcRMNJXL [options]
+./AcRNJXL [options]
 
 Details of the options are mentioned below:
 
@@ -114,17 +95,13 @@ Details of the options are mentioned below:
                 1 - input file format is NEWICK (default)
                 2 - input file format is NEXUS
 
--m METHOD_TYPE, --method=METHOD_TYPE
+-r TAXON_NAME, --ROOT=TAXON_NAME
 
-                1 - AcRNJ  (Default Method)    
-
-                2 - AcRMNJ 
-
-                3 - AcRMNJXL                
+		User can specify a taxon name to root the output species tree with that specified taxon.
 
 Example of a command (followed for the results published in the manuscript)
 
-./AcRMNJXL -I source_tree_input.txt -p1 -m3
+./AcRMNJXL -I source_tree_input.txt -p1
 
 command descriptions:
 
@@ -134,20 +111,17 @@ command descriptions:
 
 3) -p option is for specifying the input tree format input file contains the trees in NEWICK format, as specified by the option (-p1) (1 stands for newick)
 
-4) -m option is used to specify the species tree construction method. Here 3 is used to denote that AcRMNJXL is employed. The value can vary from 1 to 3.
-
 In addition, the package contains another option: -O 'output_file_name'
 
 Here, user can specify the output file name containing the derived species tree file.
 
-If no such option is provided, our method performs the following operations:
+the species tree can be rooted using a custom provided taxon, by using the option '-r'. 
+Although AcRNJXL creates a rooted tree, custom tree rooting can be provided using this option.
 
-If m = 1, a directory “AcRNJ” is created within the same directory containing the input treelist file. 
+If no such option is provided, a directory “AcRNJXL” is created within the same directory containing the input treelist file. 
 Within this new created directory, one file 'outtree_newick.tre' is created, which contains the derived species tree. 
 Another text file named 'Complete_Desription.txt' is created, which contains execution and timing information 
-for the method. For m = 2, and m = 3, directory “AcRMNJ” or 'AcRMNJXL', respectively, is created within 
-the same directory containing the input treelist file. Above mentioned files within the new directory are 
-generated as per the execution.
+for the method. 
 
 *********************************
 For any queries, please contact
