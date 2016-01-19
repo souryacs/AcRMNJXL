@@ -10,493 +10,690 @@ from UtilFunc import *
 # agglomerative clustering is tried
 #--------------------------------------------------------
 def ObtainNormalizedVal(num, denom1, denom2):
-  if ((denom1 + denom2) > 0):
-    return (num * 1.0) / (denom1 + denom2)
-  else:
-    return 0
+	if ((denom1 + denom2) > 0):
+		return (num * 1.0) / (denom1 + denom2)
+	else:
+		return 0
 
-##---------------------------------------------
+#---------------------------------------------
 """ 
 function to print the matrix content
 N is the matrix dimension
 """
 def PrintMatrixContent(N, TaxaList, inp_data, inp_str, textfile):
-  fp = open(textfile, 'a')
-  fp.write('\n printing contents of ' + str(inp_str) + ' ---- ')
-  for i in range(N):
-    fp.write('\n ' + str(i) + '--' + str(TaxaList[i]) + '--->>')
-    for j in range(i+1):
-      fp.write(' ' + str(inp_data[i][j]))
-  fp.close()
+	fp = open(textfile, 'a')
+	fp.write('\n printing contents of ' + str(inp_str) + ' ---- ')
+	for i in range(N):
+		fp.write('\n ' + str(i) + '--' + str(TaxaList[i]) + '--->>')
+		for j in range(i+1):
+			fp.write(' ' + str(inp_data[i][j]))
+	fp.close()
 
-##---------------------------------------------
+#----------------------------------------------------
+"""
+this function fills the distance matrix using accumulated internode count
+"""
+def Fill_DistMat_CoalRankInfo(DistMat, METHOD_USED, ACC_RANK_DIST_MAT_TYPE):
+	for l in TaxaPair_Reln_Dict:
+		spec1 = l[0]
+		spec2 = l[1]
+		spec1_idx = COMPLETE_INPUT_TAXA_LIST.index(spec1)
+		spec2_idx = COMPLETE_INPUT_TAXA_LIST.index(spec2)
+
+		# comment - sourya
+		#DistMat[spec2_idx][spec1_idx] = TaxaPair_Reln_Dict[l]._GetAvgAccumulatedRank()
+		
+		# add - sourya
+		if (ACC_RANK_DIST_MAT_TYPE == 1):
+			DistMat[spec2_idx][spec1_idx] = TaxaPair_Reln_Dict[l]._GetAvgAccumulatedRank()
+		elif (ACC_RANK_DIST_MAT_TYPE == 2):
+			DistMat[spec2_idx][spec1_idx] = TaxaPair_Reln_Dict[l]._GetMedianAccumulatedRank()
+		elif (ACC_RANK_DIST_MAT_TYPE == 3):
+			DistMat[spec2_idx][spec1_idx] = TaxaPair_Reln_Dict[l]._GetMultiModeAccumulatedRank()
+		elif (ACC_RANK_DIST_MAT_TYPE == 4):
+			DistMat[spec2_idx][spec1_idx] = min(TaxaPair_Reln_Dict[l]._GetAvgAccumulatedRank(), \
+				TaxaPair_Reln_Dict[l]._GetMedianAccumulatedRank())
+		elif (ACC_RANK_DIST_MAT_TYPE == 5):
+			DistMat[spec2_idx][spec1_idx] = min(TaxaPair_Reln_Dict[l]._GetAvgAccumulatedRank(), \
+				TaxaPair_Reln_Dict[l]._GetMedianAccumulatedRank(), TaxaPair_Reln_Dict[l]._GetMultiModeAccumulatedRank())
+		elif (ACC_RANK_DIST_MAT_TYPE == 6):
+			DistMat[spec2_idx][spec1_idx] = min(TaxaPair_Reln_Dict[l]._GetMedianAccumulatedRank(), \
+				TaxaPair_Reln_Dict[l]._GetMultiModeAccumulatedRank())
+		# end add - sourya
+		
+		# symmetric property
+		DistMat[spec1_idx][spec2_idx] = DistMat[spec2_idx][spec1_idx]
+	
+	return
+
+#--------------------------------------------------------
+"""
+if excess gene count information is used, this 
+function fills the distance matrix using average excess gene count
+"""
+def Fill_DistMat_ExcessGeneCount(DistMat, METHOD_USED, XL_DIST_MAT_TYPE):
+	for l in TaxaPair_Reln_Dict:
+		spec1 = l[0]
+		spec2 = l[1]
+		spec1_idx = COMPLETE_INPUT_TAXA_LIST.index(spec1)
+		spec2_idx = COMPLETE_INPUT_TAXA_LIST.index(spec2)
+		
+		# comment - sourya
+		# when the method RankAcRNJXL is used
+		#DistMat[spec2_idx][spec1_idx] = min(TaxaPair_Reln_Dict[l]._GetAvgXLVal(), TaxaPair_Reln_Dict[l]._MedianXLVal())
+		
+		# when the method ProdAcRNJXL is used
+		#DistMat[spec2_idx][spec1_idx] = TaxaPair_Reln_Dict[l]._MedianXLVal()
+		
+		# add - sourya
+		if (XL_DIST_MAT_TYPE == 1):
+			DistMat[spec2_idx][spec1_idx] = TaxaPair_Reln_Dict[l]._GetAvgXLVal()
+		elif (XL_DIST_MAT_TYPE == 2):
+			DistMat[spec2_idx][spec1_idx] = TaxaPair_Reln_Dict[l]._MedianXLVal()
+		elif (XL_DIST_MAT_TYPE == 3):
+			DistMat[spec2_idx][spec1_idx] = TaxaPair_Reln_Dict[l]._GetMultiModeXLVal()
+		elif (XL_DIST_MAT_TYPE == 4):
+			DistMat[spec2_idx][spec1_idx] = min(TaxaPair_Reln_Dict[l]._GetAvgXLVal(), \
+				TaxaPair_Reln_Dict[l]._MedianXLVal())
+		elif (XL_DIST_MAT_TYPE == 5):
+			DistMat[spec2_idx][spec1_idx] = min(TaxaPair_Reln_Dict[l]._GetAvgXLVal(), \
+				TaxaPair_Reln_Dict[l]._MedianXLVal(), TaxaPair_Reln_Dict[l]._GetMultiModeXLVal())
+		elif (XL_DIST_MAT_TYPE == 6):
+			DistMat[spec2_idx][spec1_idx] = min(TaxaPair_Reln_Dict[l]._MedianXLVal(), \
+				TaxaPair_Reln_Dict[l]._GetMultiModeXLVal())
+		# end add - sourya
+		
+		# symmetric property of the distance matrix
+		DistMat[spec1_idx][spec2_idx] = DistMat[spec2_idx][spec1_idx]
+
+	return
+
+#---------------------------------------------
+"""
+computing the row wise sum for individual taxca clusters
+"""
+def ComputeSumRowsDistMat(sum_list, nclust, DistMat, Output_Text_File, inpstr):
+	for i in range(nclust):
+		t1 = 0
+		for j in range(nclust):
+			t1 = t1 + DistMat[i][j]
+		sum_list.append(t1)
+		
+	if (DEBUG_LEVEL > 2):
+		fp = open(Output_Text_File, 'a')
+		fp.write('\n content of ' + str(inpstr) + ' : ' + str(sum_list))
+		fp.close()
+	
+	return
+
+#----------------------------------------------------------
+"""
+fill the normalized matrix entries for agglomerative clustering based method
+"""
+def FillAggloClustNormalizeMatrix(NormMat, DistMat, sum_list, nclust):
+	for i in range(nclust - 1):
+		for j in range(i+1, nclust):
+			# comment - sourya
+			#NormMat[i][j] = ObtainNormalizedVal(DistMat[i][j], sum_list[i], sum_list[j])
+			# add - sourya
+			NormMat[i][j] = ObtainNormalizedVal(DistMat[i][j], \
+				(sum_list[i] - DistMat[i][j]), (sum_list[j] - DistMat[i][j]))
+			# end add - sourya
+			NormMat[j][i] = NormMat[i][j]
+
+	return
+
+#----------------------------------------------------------
+"""
+fill the normalized matrix entries for NJ based method
+"""
+def FillNJNormalizeMatrix(NormMat, DistMat, sum_list, nclust):
+	for i in range(nclust - 1):
+		for j in range(i+1, nclust):
+			ri = sum_list[i] / (nclust - 2)
+			rj = sum_list[j] / (nclust - 2)
+			NormMat[i][j] = (DistMat[i][j] - ri - rj)
+			NormMat[j][i] = NormMat[i][j]
+
+	return
+
+
+#---------------------------------------------
+"""
+finds the minimum of the distance matrix
+when the product of both accumulated coalescence rank and excess gene count based 
+measures are used
+"""
+def Find_Unique_Min_XL(DistMat_CoalRank, Norm_DistMat_CoalRank, DistMat_XL, \
+	Norm_DistMat_XL, nclust, clust_species_list, NJ_RULE_USED):
+	
+	target_val = (Norm_DistMat_CoalRank[0][1] * Norm_DistMat_XL[0][1])
+	min_idx_i = 0
+	min_idx_j = 1
+	for i in range(nclust - 1):
+		for j in range(i+1, nclust):
+			if (i == j):
+				continue
+			if (NJ_RULE_USED == AGGLO_CLUST):
+				if ((Norm_DistMat_CoalRank[i][j] * Norm_DistMat_XL[i][j]) < target_val):
+					target_val = (Norm_DistMat_CoalRank[i][j] * Norm_DistMat_XL[i][j])
+					min_idx_i = i
+					min_idx_j = j
+			else:
+				if ((Norm_DistMat_CoalRank[i][j] * Norm_DistMat_XL[i][j]) > target_val):
+					target_val = (Norm_DistMat_CoalRank[i][j] * Norm_DistMat_XL[i][j])
+					min_idx_i = i
+					min_idx_j = j
+				
+	return min_idx_i, min_idx_j
+	
+#---------------------------------------------
+"""
+finds the minimum of the distance matrix
+when only branch count based measure is used
+"""
+def Find_Unique_Min(Norm_DistMat_CoalRank, nclust):
+	target_val = Norm_DistMat_CoalRank[0][1]
+	min_idx_i = 0
+	min_idx_j = 1
+	for i in range(nclust - 1):
+		for j in range(i+1, nclust):
+			if (i == j):
+				continue
+			if (Norm_DistMat_CoalRank[i][j] < target_val):
+				target_val = Norm_DistMat_CoalRank[i][j]
+				min_idx_i = i
+				min_idx_j = j
+	
+	return min_idx_i, min_idx_j
+
+#-------------------------------------------
+"""
+this function is a new version
+"""
+def Find_Unique_Min_RankBased(DistMat_CoalRank, Norm_DistMat_CoalRank, DistMat_XL, \
+	Norm_DistMat_XL, nclust, clust_species_list, outfile, RankMergeMethod):
+	
+	if (DEBUG_LEVEL >= 2):
+		fp = open(outfile, 'a')
+	
+	Norm_DistMat_List = []
+	DistMat_XL_List = []
+	for i in range(nclust - 1):
+		for j in range(i+1, nclust):
+			if (i == j):
+				continue
+			Norm_DistMat_List.append(Norm_DistMat_CoalRank[i][j])
+			DistMat_XL_List.append(DistMat_XL[i][j])
+	
+	Norm_DistMat_List.sort()
+	DistMat_XL_List.sort()
+	
+	if (RankMergeMethod == SIMPLE_SUM_RANK):
+		min_idx_i = 0
+		min_idx_j = 1
+		min_rank_Norm_DistMat_List = Norm_DistMat_List.index(Norm_DistMat_CoalRank[0][1])
+		min_rank_DistMat_XL_List = DistMat_XL_List.index(DistMat_XL[0][1])
+		min_rank = min_rank_Norm_DistMat_List + min_rank_DistMat_XL_List
+	elif (RankMergeMethod == MEAN_RECIPROCAL_RANK):
+		max_idx_i = 0
+		max_idx_j = 1
+		# we allow rank values from 1, instead of 0
+		max_rank_Norm_DistMat_List = Norm_DistMat_List.index(Norm_DistMat_CoalRank[0][1]) + 1
+		max_rank_DistMat_XL_List = DistMat_XL_List.index(DistMat_XL[0][1]) + 1
+		# compute the mean reciprocal rank value
+		max_rank = 0.5 * ((1.0 / max_rank_Norm_DistMat_List) + (1.0 / max_rank_DistMat_XL_List))
+		
+	for i in range(nclust - 1):
+		for j in range(i+1, nclust):
+			if (i == j):
+				continue
+			if (RankMergeMethod == SIMPLE_SUM_RANK):
+				Norm_DistMat_Rank = Norm_DistMat_List.index(Norm_DistMat_CoalRank[i][j])
+				DistMat_XL_rank = DistMat_XL_List.index(DistMat_XL[i][j])
+				total_rank = Norm_DistMat_Rank + DistMat_XL_rank
+			elif (RankMergeMethod == MEAN_RECIPROCAL_RANK):
+				# we allow rank values from 1, instead of 0
+				Norm_DistMat_Rank = Norm_DistMat_List.index(Norm_DistMat_CoalRank[i][j]) + 1
+				DistMat_XL_rank = DistMat_XL_List.index(DistMat_XL[i][j]) + 1
+				total_rank = 0.5 * ((1.0 / Norm_DistMat_Rank) + (1.0 / DistMat_XL_rank))
+				
+			if (RankMergeMethod == SIMPLE_SUM_RANK):
+				if (total_rank < min_rank):
+					min_idx_i = i
+					min_idx_j = j
+					min_rank = total_rank
+					min_rank_Norm_DistMat_List = Norm_DistMat_Rank
+					min_rank_DistMat_XL_List = DistMat_XL_rank
+					if (DEBUG_LEVEL >= 2):
+						fp.write('\n Within iteration --- min_idx_i ' + str(min_idx_i) + \
+							' min_idx_j : ' + str(min_idx_j) + \
+							' min_rank_Norm_DistMat_List: ' + str(min_rank_Norm_DistMat_List) \
+								+ '  min_rank_DistMat_XL_List: ' + str(min_rank_DistMat_XL_List))
+				elif (total_rank == min_rank):
+					#-------------------------------------------------------
+					# this was in the old code - comment for the moment - sourya
+					# this is used when _A name in the folder is not used
+					
+					if (Norm_DistMat_Rank < min_rank_Norm_DistMat_List) and (min_rank_DistMat_XL_List > 0):	# add - sourya
+						min_idx_i = i
+						min_idx_j = j
+						min_rank = total_rank
+						min_rank_Norm_DistMat_List = Norm_DistMat_Rank
+						min_rank_DistMat_XL_List = DistMat_XL_rank
+						if (DEBUG_LEVEL >= 2):
+							fp.write('\n Within iteration --- min_idx_i ' + str(min_idx_i) + \
+								' min_idx_j : ' + str(min_idx_j) + \
+								' min_rank_Norm_DistMat_List: ' + str(min_rank_Norm_DistMat_List) \
+									+ '  min_rank_DistMat_XL_List: ' + str(min_rank_DistMat_XL_List))
+
+					elif (min_rank_Norm_DistMat_List > 0) and (min_rank_DistMat_XL_List > 0) \
+						and ((Norm_DistMat_Rank == 0) or (DistMat_XL_rank == 0)):	# add - sourya
+						min_idx_i = i
+						min_idx_j = j
+						min_rank = total_rank
+						min_rank_Norm_DistMat_List = Norm_DistMat_Rank
+						min_rank_DistMat_XL_List = DistMat_XL_rank
+						if (DEBUG_LEVEL >= 2):
+							fp.write('\n Within iteration --- min_idx_i ' + str(min_idx_i) + \
+								' min_idx_j : ' + str(min_idx_j) + \
+								' min_rank_Norm_DistMat_List: ' + str(min_rank_Norm_DistMat_List) + \
+									'  min_rank_DistMat_XL_List: ' + \
+									str(min_rank_DistMat_XL_List))
+								
+					# end code comment - sourya
+					#-------------------------------------------------------
+					## new code - sourya - much simpler
+					## it just give priority to lower distance measure
+					## this is used when _A folder name is used
+					
+					## comment - sourya
+					#if (Norm_DistMat_Rank < min_rank_Norm_DistMat_List):
+						#min_idx_i = i
+						#min_idx_j = j
+						#min_rank = total_rank
+						#min_rank_Norm_DistMat_List = Norm_DistMat_Rank
+						#min_rank_DistMat_XL_List = DistMat_XL_rank
+						#if (DEBUG_LEVEL >= 2):
+							#fp.write('\n Within iteration --- min_idx_i ' + str(min_idx_i) + \
+								#' min_idx_j : ' + str(min_idx_j) + \
+								#' min_rank_Norm_DistMat_List: ' + str(min_rank_Norm_DistMat_List) \
+									#+ '  min_rank_DistMat_XL_List: ' + str(min_rank_DistMat_XL_List))
+								
+					### add  - check  sourya
+					##if (DistMat_XL_rank < min_rank_DistMat_XL_List):
+						##min_idx_i = i
+						##min_idx_j = j
+						##min_rank = total_rank
+						##min_rank_Norm_DistMat_List = Norm_DistMat_Rank
+						##min_rank_DistMat_XL_List = DistMat_XL_rank
+						##if (DEBUG_LEVEL >= 2):
+							##fp.write('\n Within iteration --- min_idx_i ' + str(min_idx_i) + \
+								##' min_idx_j : ' + str(min_idx_j) + \
+								##' min_rank_Norm_DistMat_List: ' + str(min_rank_Norm_DistMat_List) \
+									##+ '  min_rank_DistMat_XL_List: ' + str(min_rank_DistMat_XL_List))
+					
+					
+								
+					## end add code - sourya
+					#-------------------------------------------------------
+			elif (RankMergeMethod == MEAN_RECIPROCAL_RANK):
+				if (total_rank > max_rank):
+					max_idx_i = i
+					max_idx_j = j
+					max_rank = total_rank
+					max_rank_Norm_DistMat_List = Norm_DistMat_Rank
+					max_rank_DistMat_XL_List = DistMat_XL_rank
+					if (DEBUG_LEVEL >= 2):
+						fp.write('\n Within iteration --- max_idx_i ' + str(max_idx_i) \
+							+ ' max_idx_j : ' + str(max_idx_j) + \
+							' max_rank_Norm_DistMat_List: ' + str(max_rank_Norm_DistMat_List) \
+								+ '  max_rank_DistMat_XL_List: ' + str(max_rank_DistMat_XL_List))
+
+	if (DEBUG_LEVEL >= 2):
+		fp.close()
+	
+	if (RankMergeMethod == SIMPLE_SUM_RANK):
+		return min_idx_i, min_idx_j
+	elif (RankMergeMethod == MEAN_RECIPROCAL_RANK):
+		return max_idx_i, max_idx_j
+
+#-------------------------------------------
+"""
+checks whether a taxa cluster specified by the input index is a leaf
+"""
+def IsLeafCluster(clust_species_list, idx):
+	if (len(clust_species_list[idx]) == 1):
+		return True
+	return False
+
+#-------------------------------------------
+"""
+this function has following parameters:
+1) first_cluster_mrca_node: root of 1st subtree 
+2) second_cluster_mrca_node: root of 2nd subtree 
+3) all_taxa_mrca_node: root of all these trees
+4) Curr_tree: Tree containing all these subtrees
+
+It creates one new internal node as a child of all_taxa_mrca_node
+and places above mentioned subtrees as its children
+"""
+def MergeSubtrees(Curr_tree, first_cluster_mrca_node, second_cluster_mrca_node, \
+	all_taxa_mrca_node, taxa_list, Output_Text_File):
+	if (DEBUG_LEVEL >= 2):
+		fp = open(Output_Text_File, 'a')
+		fp.write('\n label of first_cluster_mrca_node: ' + str(Node_Label(first_cluster_mrca_node)))      
+		fp.write('\n label of second_cluster_mrca_node: ' + str(Node_Label(second_cluster_mrca_node)))
+		fp.write('\n label of all_taxa_mrca_node: ' + str(Node_Label(all_taxa_mrca_node)))
+		fp.close()
+
+	# create new internal node 
+	newnode = dendropy.Node()
+	
+	# its parent node will be the previous MRCA node of all the taxa in two clusters
+	all_taxa_mrca_node.add_child(newnode)
+	newnode.parent_node = all_taxa_mrca_node
+	all_taxa_mrca_node.remove_child(first_cluster_mrca_node)
+	first_cluster_mrca_node.parent_node = None
+	all_taxa_mrca_node.remove_child(second_cluster_mrca_node)
+	second_cluster_mrca_node.parent_node = None
+	
+	# add these individual clusters' MRCA node as its children
+	newnode.add_child(first_cluster_mrca_node)
+	first_cluster_mrca_node.parent_node = newnode
+	newnode.add_child(second_cluster_mrca_node)
+	second_cluster_mrca_node.parent_node = newnode
+	
+	# update splits of the resulting tree
+	Curr_tree.update_splits(delete_outdegree_one=False)
+
+	if (DEBUG_LEVEL >= 2):
+		fp = open(Output_Text_File, 'a')
+		fp.write('\n label of newnode: ' + str(Node_Label(newnode)))
+		fp.write('\n label of all taxa mrca node (recomputed): ' + str(Node_Label(Curr_tree.mrca(taxon_labels=taxa_list))))  
+		fp.close()
+
+	return Curr_tree
+
+#-------------------------------------------
+"""
+this function merges a pair of clusters whose indices are pointed by the min_idx_i and min_idx_j entries
+this is part of the proposed agglomerative clustering
+taxa_list is the union of these two clusters (species contents)
+"""
+def Merge_Cluster_Pair(Curr_tree, clust_species_list, min_idx_i, min_idx_j, taxa_list, Output_Text_File):
+	isleaf_clust1 = IsLeafCluster(clust_species_list, min_idx_i)
+	isleaf_clust2 = IsLeafCluster(clust_species_list, min_idx_j)
+	
+	if (isleaf_clust1):
+		first_cluster_mrca_node = Curr_tree.find_node_with_taxon_label(clust_species_list[min_idx_i][0])
+	else:
+		first_cluster_mrca_node = Curr_tree.mrca(taxon_labels=clust_species_list[min_idx_i])
+	
+	if (isleaf_clust2):
+		second_cluster_mrca_node = Curr_tree.find_node_with_taxon_label(clust_species_list[min_idx_j][0])
+	else:
+		second_cluster_mrca_node = Curr_tree.mrca(taxon_labels=clust_species_list[min_idx_j])
+	
+	all_taxa_mrca_node = Curr_tree.mrca(taxon_labels=taxa_list)
+	
+	Curr_tree = MergeSubtrees(Curr_tree, first_cluster_mrca_node, second_cluster_mrca_node, \
+		all_taxa_mrca_node, taxa_list, Output_Text_File)
+	
+	return Curr_tree
+
+#---------------------------------------------
 """
 this function refines the initial species tree (in terms of a star network) to 
 find the true species tree
 it does using agglomerative clustering (NJ principle)
 the distance metric employed for NJ algorithm can vary depending on experimentation 
 """
-def Form_Species_Tree_NJ_Cluster(Star_Tree_Initial, COMPLETE_INPUT_TAXA_LIST, METHOD_USED, NJ_RULE_USED, Output_Text_File):
+def Form_Species_Tree_NJ_Cluster(Curr_tree, COMPLETE_INPUT_TAXA_LIST, METHOD_USED, \
+	NJ_RULE_USED, Output_Text_File, XL_DIST_MAT_TYPE, XL_DISTMAT_UPDATE_METHOD, \
+		ACC_RANK_DIST_MAT_TYPE, RANK_AGGREGATE_METHOD_TYPE):
 
-  # initially we have N of clusters for N taxa, where individual clusters are isolated
-  # agglomerating technique introduces a bipartition (speciation) which contains two taxa as its children
-  no_of_taxa_clust = len(COMPLETE_INPUT_TAXA_LIST)
-  
-  # initialize the taxa clusters
-  # copying the taxa list is done since initial clusters contain single species  
-  # comment - sourya - we do not just copy ordinarily
-  #clust_species_list = COMPLETE_INPUT_TAXA_LIST[:]
-  # add - sourya - we enclose individual elements within a list and then copy these single element lists
-  clust_species_list = []
-  for i in range(len(COMPLETE_INPUT_TAXA_LIST)):
-    subl = []
-    subl.append(COMPLETE_INPUT_TAXA_LIST[i])
-    clust_species_list.append(subl)
-  
-  # for individual cluster pairs, we compute the sum of extra lineages
-  if (DEBUG_LEVEL >= 2):
-    fp = open(Output_Text_File, 'a')
-    fp.write('\n COMPLETE_INPUT_TAXA_LIST ' + str(COMPLETE_INPUT_TAXA_LIST))
-    fp.write('\n Initial formed clust_species_list ' + str(clust_species_list))
-    fp.close()        
-  
-  # allocate a 2D square matrix of no_of_taxa_clust dimension
-  # for a pair of taxa clusters Cx and Cy, it contains the employed main distance metric for the cluster pairs
-  Mean_DistMat_ClustPair_NJ = numpy.zeros((no_of_taxa_clust, no_of_taxa_clust), dtype=numpy.int)	#int
+	# initially we have N of clusters for N taxa, where individual clusters are isolated
+	# agglomerating technique introduces a bipartition (speciation) which contains two taxa as its children
+	no_of_taxa_clust = len(COMPLETE_INPUT_TAXA_LIST)
 
-  # allocate one new square matrix which will contain the NJ based modified distance matrix (used for minimum finding routine)
-  Norm_Mean_DistMat_ClustPair_NJ = numpy.zeros((no_of_taxa_clust, no_of_taxa_clust), dtype=numpy.float)
-  
-  if (METHOD_USED == AcRMNJXL):
-    # we allocate matrices containing LCA rank among individual couplets
-    LCARank_DistMat_ClustPair_NJ = numpy.zeros((no_of_taxa_clust, no_of_taxa_clust), dtype=numpy.int)
-    # allocate one new square matrix which will contain the normalized mean LCA rank
-    # used in NJ iterations
-    Norm_LCARank_DistMat_ClustPair_NJ = numpy.zeros((no_of_taxa_clust, no_of_taxa_clust), dtype=numpy.float)
-  
-  # now fill the Mean_DistMat_ClustPair_NJ according to the specified metric used for NJ like clustering
-  for l in TaxaPair_Reln_Dict:
-    spec1 = l[0]
-    spec2 = l[1]
-    spec1_idx = COMPLETE_INPUT_TAXA_LIST.index(spec1)
-    spec2_idx = COMPLETE_INPUT_TAXA_LIST.index(spec2)
-    # fill the distance matrix entries according to the distance metric and the statistics used (input parameters) 
-    if (METHOD_USED == AcRNJ):
-      Mean_DistMat_ClustPair_NJ[spec1_idx][spec2_idx] = \
-	Mean_DistMat_ClustPair_NJ[spec2_idx][spec1_idx] = TaxaPair_Reln_Dict[l]._GetAvgAccumulatedRank()
-    elif (METHOD_USED == AcRMNJ):
-      Mean_DistMat_ClustPair_NJ[spec1_idx][spec2_idx] = \
-	Mean_DistMat_ClustPair_NJ[spec2_idx][spec1_idx] = TaxaPair_Reln_Dict[l]._GetMultiModeAccumulatedRank()
-    elif (METHOD_USED == AcRMNJXL):
-      Mean_DistMat_ClustPair_NJ[spec1_idx][spec2_idx] = \
-	Mean_DistMat_ClustPair_NJ[spec2_idx][spec1_idx] = TaxaPair_Reln_Dict[l]._GetMultiModeAccumulatedRank()
-            
-    if (METHOD_USED == AcRMNJXL): 
-      # mean of LCA rank information
-      LCARank_DistMat_ClustPair_NJ[spec2_idx][spec1_idx] = TaxaPair_Reln_Dict[l]._GetAvgXLVal()
-      LCARank_DistMat_ClustPair_NJ[spec1_idx][spec2_idx] = LCARank_DistMat_ClustPair_NJ[spec2_idx][spec1_idx]
-          
-  #--------------------------------------------------------
-  # loop to execute the agglomerative clustering
-  while(no_of_taxa_clust > 2): 
-    if (DEBUG_LEVEL >= 2):
-      fp = open(Output_Text_File, 'a')
-      fp.write('\n iteration start --- number of clusters: ' + str(no_of_taxa_clust))
-      fp.write('\n clust_species_list : ' + str(clust_species_list))
-      fp.close()
-      PrintMatrixContent(no_of_taxa_clust, clust_species_list, Mean_DistMat_ClustPair_NJ, \
-	'Mean_DistMat_ClustPair_NJ', Output_Text_File)
-      if (METHOD_USED == AcRMNJXL):
-	PrintMatrixContent(no_of_taxa_clust, clust_species_list, LCARank_DistMat_ClustPair_NJ, \
-	  'LCARank_DistMat_ClustPair_NJ', Output_Text_File)
-          
-    # for individual cluster Cx, it contains XL(Cx, :) - sum of extra lineages considering the cluster pair 
-    # (Cx, Cy) for all other clusters Cy
-    sum_DistMat_Clust = []
-    if (METHOD_USED == AcRMNJXL):
-      sum_LCARank_Clust = []
-    for i in range(no_of_taxa_clust):
-      t1 = 0
-      t2 = 0
-      for j in range(no_of_taxa_clust):
-	t1 = t1 + Mean_DistMat_ClustPair_NJ[i][j]
-	if (METHOD_USED == AcRMNJXL):
-	  t2 = t2 + LCARank_DistMat_ClustPair_NJ[i][j]
-      sum_DistMat_Clust.append(t1)
-      if (METHOD_USED == AcRMNJXL):
-	sum_LCARank_Clust.append(t2)
-      
-    if (DEBUG_LEVEL > 2):
-      fp = open(Output_Text_File, 'a')
-      fp.write('\n content of sum_DistMat_Clust : ' + str(sum_DistMat_Clust))
-      if (METHOD_USED == AcRMNJXL):
-	fp.write('\n content of sum_LCARank_Clust : ' + str(sum_LCARank_Clust))
-      fp.close()
-      
-    # fill the normalized matrix, which will be used for clustering
-    for i in range(no_of_taxa_clust - 1):
-      for j in range(i+1, no_of_taxa_clust):
-	if (NJ_RULE_USED == AGGLO_CLUST):
-	  Norm_Mean_DistMat_ClustPair_NJ[i][j] = \
-	    ObtainNormalizedVal(Mean_DistMat_ClustPair_NJ[i][j], sum_DistMat_Clust[i], sum_DistMat_Clust[j])
-	  Norm_Mean_DistMat_ClustPair_NJ[j][i] = Norm_Mean_DistMat_ClustPair_NJ[i][j]
-	  if (METHOD_USED == AcRMNJXL):
-	    # update the normalized LCA rank matrix
-	    Norm_LCARank_DistMat_ClustPair_NJ[i][j] = \
-	      ObtainNormalizedVal(LCARank_DistMat_ClustPair_NJ[i][j], sum_LCARank_Clust[i], sum_LCARank_Clust[j])
-	    Norm_LCARank_DistMat_ClustPair_NJ[j][i] = Norm_LCARank_DistMat_ClustPair_NJ[i][j]
-	else:	
-	  # here ri , rj are the sum of all distances
-	  # standard NJ method implementation
-	  ri = sum_DistMat_Clust[i] / (no_of_taxa_clust - 2)
-	  rj = sum_DistMat_Clust[j] / (no_of_taxa_clust - 2)
-	  Norm_Mean_DistMat_ClustPair_NJ[i][j] = (Mean_DistMat_ClustPair_NJ[i][j] - ri - rj)
-	  Norm_Mean_DistMat_ClustPair_NJ[j][i] = Norm_Mean_DistMat_ClustPair_NJ[i][j]
-	  if (METHOD_USED == AcRMNJXL):
-	    # update the normalized LCA rank matrix
-	    ri1 = sum_LCARank_Clust[i] / (no_of_taxa_clust - 2)
-	    rj1 = sum_LCARank_Clust[j] / (no_of_taxa_clust - 2)
-	    Norm_LCARank_DistMat_ClustPair_NJ[i][j] = (LCARank_DistMat_ClustPair_NJ[i][j] - ri1 - rj1)
-	    Norm_LCARank_DistMat_ClustPair_NJ[j][i] = Norm_LCARank_DistMat_ClustPair_NJ[i][j]
+	# initialize the taxa clusters
+	# copying the taxa list is done since initial clusters contain single species  
+	# comment - sourya - we do not just copy ordinarily
+	#clust_species_list = COMPLETE_INPUT_TAXA_LIST[:]
+	# add - sourya - we enclose individual elements within a list and then copy these single element lists
+	clust_species_list = []
+	for i in range(len(COMPLETE_INPUT_TAXA_LIST)):
+		subl = []
+		subl.append(COMPLETE_INPUT_TAXA_LIST[i])
+		clust_species_list.append(subl)
 
-    if (DEBUG_LEVEL >= 2):
-      PrintMatrixContent(no_of_taxa_clust, clust_species_list, Norm_Mean_DistMat_ClustPair_NJ, \
-	'Norm_Mean_DistMat_ClustPair_NJ', Output_Text_File)
-      
-    if (DEBUG_LEVEL >= 2):
-      if (METHOD_USED == AcRMNJXL):
-	PrintMatrixContent(no_of_taxa_clust, clust_species_list, Norm_LCARank_DistMat_ClustPair_NJ, \
-	  'Norm_LCARank_DistMat_ClustPair_NJ', Output_Text_File)
-    
-    #---------------------------------------------------------------  
-    # add - sourya
-    if (NJ_RULE_USED == AGGLO_CLUST):
-      """ 
-      here we have used agglomerative clustering using normalized matrix entries
-      
-      here both Norm_Mean_DistMat_ClustPair_NJ and 
-      Norm_VarianceAccRank_DistMat_ClustPair_NJ /  Norm_LCARank_DistMat_ClustPair_NJ matrices 
-      contain positive but small fraction entries
-      so we have to find the minimum among these elements 
-      (product of these two matrices in position specific way)
-      and find out the corresponding indices
-      
-      the minimum is stored in the element target_val
-      we have used "<" operator to find out the minimum of the elements
-      """
-      if (METHOD_USED == AcRMNJXL):
-	target_val = (Norm_Mean_DistMat_ClustPair_NJ[0][1] * Norm_LCARank_DistMat_ClustPair_NJ[0][1])
-	min_idx_i = 0
-	min_idx_j = 1
-	for i in range(no_of_taxa_clust - 1):
-	  for j in range(i+1, no_of_taxa_clust):
-	    if (i == j):
-	      continue
-	    if ((Norm_Mean_DistMat_ClustPair_NJ[i][j] * Norm_LCARank_DistMat_ClustPair_NJ[i][j]) < target_val):
-	      target_val = (Norm_Mean_DistMat_ClustPair_NJ[i][j] * Norm_LCARank_DistMat_ClustPair_NJ[i][j])
-	      min_idx_i = i
-	      min_idx_j = j
-	    elif ((Norm_Mean_DistMat_ClustPair_NJ[i][j] * Norm_LCARank_DistMat_ClustPair_NJ[i][j]) == target_val):
-	      # here we prioritize the cluster pair having minimum number of species
-	      if (len(clust_species_list[i]) + len(clust_species_list[j])) < (len(clust_species_list[min_idx_i]) + len(clust_species_list[min_idx_j])):
-		min_idx_i = i
-		min_idx_j = j
-      else:
-	target_val = Norm_Mean_DistMat_ClustPair_NJ[0][1]
-	min_idx_i = 0
-	min_idx_j = 1
-	for i in range(no_of_taxa_clust - 1):
-	  for j in range(i+1, no_of_taxa_clust):
-	    if (i == j):
-	      continue
-	    if (Norm_Mean_DistMat_ClustPair_NJ[i][j] < target_val):
-	      target_val = Norm_Mean_DistMat_ClustPair_NJ[i][j]
-	      min_idx_i = i
-	      min_idx_j = j
-	    elif (Norm_Mean_DistMat_ClustPair_NJ[i][j] == target_val):
-	      # here we prioritize the cluster pair having minimum number of species
-	      if (len(clust_species_list[i]) + len(clust_species_list[j])) < (len(clust_species_list[min_idx_i]) + len(clust_species_list[min_idx_j])):
-		min_idx_i = i
-		min_idx_j = j
-    
-    else:	# NJ_RULE_USED = TRADITIONAL_NJ 
-      """ 
-      here we have used agglomerative clustering using standard NJ rules
-      
-      here both Norm_Mean_DistMat_ClustPair_NJ and 
-      Norm_VarianceAccRank_DistMat_ClustPair_NJ / Norm_LCARank_DistMat_ClustPair_NJ matrices 
-      contain negative entries (absolute value will be very high, so as to obtain very high negative values)
-      so we have to find the maximum among the product matrix elements (individual high negative entries)
-      (product of these two matrices in position specific way)
-      and find out the corresponding indices
-      
-      the maximum is stored in the element target_val
-      we have used ">" operator to find out the maximum of the elements
-      """
-      if (METHOD_USED == AcRMNJXL):
-	target_val = (Norm_Mean_DistMat_ClustPair_NJ[0][1] * Norm_LCARank_DistMat_ClustPair_NJ[0][1])
-	min_idx_i = 0
-	min_idx_j = 1
-	for i in range(no_of_taxa_clust - 1):
-	  for j in range(i+1, no_of_taxa_clust):
-	    if (i == j):
-	      continue
-	    if ((Norm_Mean_DistMat_ClustPair_NJ[i][j] * Norm_LCARank_DistMat_ClustPair_NJ[i][j]) > target_val):
-	      target_val = (Norm_Mean_DistMat_ClustPair_NJ[i][j] * Norm_LCARank_DistMat_ClustPair_NJ[i][j])
-	      min_idx_i = i
-	      min_idx_j = j
-      else:
-	target_val = Norm_Mean_DistMat_ClustPair_NJ[0][1]
-	min_idx_i = 0
-	min_idx_j = 1
-	for i in range(no_of_taxa_clust - 1):
-	  for j in range(i+1, no_of_taxa_clust):
-	    if (i == j):
-	      continue
-	    if (Norm_Mean_DistMat_ClustPair_NJ[i][j] < target_val):
-	      target_val = Norm_Mean_DistMat_ClustPair_NJ[i][j]
-	      min_idx_i = i
-	      min_idx_j = j
-    
-    # end add - sourya
-    #---------------------------------------------------------------      
-    
-    # note down the taxa list in these two indices (min_idx_i and min_idx_j) of the clust_species_list
-    taxa_list = []
-    for x in clust_species_list[min_idx_i]:
-      taxa_list.append(x)
-    for x in clust_species_list[min_idx_j]:
-      taxa_list.append(x)
+	# for individual cluster pairs, we compute the sum of extra lineages
+	if (DEBUG_LEVEL >= 2):
+		fp = open(Output_Text_File, 'a')
+		fp.write('\n COMPLETE_INPUT_TAXA_LIST ' + str(COMPLETE_INPUT_TAXA_LIST))
+		fp.write('\n Initial formed clust_species_list ' + str(clust_species_list))
+		fp.close()        
 
-    if (DEBUG_LEVEL >= 2):
-      fp = open(Output_Text_File, 'a')
-      fp.write('\n min_idx_i ' + str(min_idx_i) + ' min_idx_j : ' + str(min_idx_j) + 'min val : ' + str(min_val))
-      fp.write('\n min index - mean acc rank / branch count: ' + str(Mean_DistMat_ClustPair_NJ[min_idx_i][min_idx_j]))
-      if (METHOD_USED == AcRMNJXL):
-	fp.write('\n target index - LCA rank: ' + str(LCARank_DistMat_ClustPair_NJ[min_idx_i][min_idx_j]))
-      fp.write('\n min_idx_i species list ' + str(clust_species_list[min_idx_i]))
-      fp.write('\n min_idx_j species list ' + str(clust_species_list[min_idx_j]))
-      fp.write('\n complete taxa list (union) ' + str(taxa_list))
-      fp.close()
+	# allocate a 2D square matrix of no_of_taxa_clust dimension
+	# for a pair of taxa clusters Cx and Cy, it contains the employed main distance metric for the cluster pairs
+	Mean_DistMat_ClustPair_NJ = numpy.zeros((no_of_taxa_clust, no_of_taxa_clust), dtype=numpy.float)
 
-    #---------------------------------------------------------      
-    # for individual clusters, we check if the cluster contains one or more species
-    # case 1 - both the clusters have > 1 species
-    # and the clusters are represented by an internal node which is the MRCA of the constituent species set
-    if (len(clust_species_list[min_idx_i]) > 1) and (len(clust_species_list[min_idx_j]) > 1):
-      # comment - sourya
-      #first_cluster_mrca_node = Star_Tree_Initial.mrca(taxon_labels=clust_species_list[min_idx_i])
-      #second_cluster_mrca_node = Star_Tree_Initial.mrca(taxon_labels=clust_species_list[min_idx_j])
-      #all_taxa_mrca_node = Star_Tree_Initial.mrca(taxon_labels=taxa_list)
-      # add - sourya
-      first_cluster_mrca_node = Find_MRCA(Star_Tree_Initial, clust_species_list[min_idx_i])
-      second_cluster_mrca_node = Find_MRCA(Star_Tree_Initial, clust_species_list[min_idx_j])
-      all_taxa_mrca_node = Find_MRCA(Star_Tree_Initial, taxa_list)
-      # end add - sourya
-      if (DEBUG_LEVEL >= 2):
-	fp = open(Output_Text_File, 'a')
-	fp.write('\n label of first_cluster_mrca_node: ' + str(Node_Label(first_cluster_mrca_node)))      
-	fp.write('\n label of second_cluster_mrca_node: ' + str(Node_Label(second_cluster_mrca_node)))
-	fp.write('\n label of all_taxa_mrca_node: ' + str(Node_Label(all_taxa_mrca_node)))
-	fp.close()
+	# allocate one new square matrix which will contain the NJ based modified distance matrix (used for minimum finding routine)
+	Norm_Mean_DistMat_ClustPair_NJ = numpy.zeros((no_of_taxa_clust, no_of_taxa_clust), dtype=numpy.float)
 	
-      # create new internal node 
-      newnode = dendropy.Node()
-      # its parent node will be the previous MRCA node of all the taxa in two clusters
-      all_taxa_mrca_node.add_child(newnode)
-      newnode.parent_node = all_taxa_mrca_node
-      all_taxa_mrca_node.remove_child(first_cluster_mrca_node)
-      first_cluster_mrca_node.parent_node = None
-      all_taxa_mrca_node.remove_child(second_cluster_mrca_node)
-      second_cluster_mrca_node.parent_node = None
-      # add these individual clusters' MRCA node as its children
-      newnode.add_child(first_cluster_mrca_node)
-      first_cluster_mrca_node.parent_node = newnode
-      newnode.add_child(second_cluster_mrca_node)
-      second_cluster_mrca_node.parent_node = newnode
-      # update splits of the resulting tree
-      Star_Tree_Initial.update_splits(delete_outdegree_one=False)
-      
-    # case 2 and 3 - one cluster has at least 2 species, while other is a leaf
-    elif (len(clust_species_list[min_idx_i]) == 1) and (len(clust_species_list[min_idx_j]) > 1):
-      first_cluster_leaf_node = Star_Tree_Initial.find_node_with_taxon_label(clust_species_list[min_idx_i][0])
-      # comment - sourya
-      #second_cluster_mrca_node = Star_Tree_Initial.mrca(taxon_labels=clust_species_list[min_idx_j])
-      #all_taxa_mrca_node = Star_Tree_Initial.mrca(taxon_labels=taxa_list)
-      # add - sourya
-      second_cluster_mrca_node = Find_MRCA(Star_Tree_Initial, clust_species_list[min_idx_j])
-      all_taxa_mrca_node = Find_MRCA(Star_Tree_Initial, taxa_list)
-      # end add - sourya
-      if (DEBUG_LEVEL >= 2):
-	fp = open(Output_Text_File, 'a')
-	fp.write('\n first cluster is a leaf - its label: ' + str(Node_Label(first_cluster_leaf_node)))      
-	fp.write('\n label of second_cluster_mrca_node: ' + str(Node_Label(second_cluster_mrca_node)))
-	fp.write('\n label of all_taxa_mrca_node: ' + str(Node_Label(all_taxa_mrca_node)))
-	fp.close()
-      
-      # create new internal node 
-      newnode = dendropy.Node()
-      # its parent node will be the previous MRCA node of all the taxa in two clusters
-      all_taxa_mrca_node.add_child(newnode)
-      newnode.parent_node = all_taxa_mrca_node
-      all_taxa_mrca_node.remove_child(first_cluster_leaf_node)
-      first_cluster_leaf_node.parent_node = None
-      all_taxa_mrca_node.remove_child(second_cluster_mrca_node)
-      second_cluster_mrca_node.parent_node = None
-      # add these individual clusters' MRCA node as its children
-      newnode.add_child(first_cluster_leaf_node)
-      first_cluster_leaf_node.parent_node = newnode
-      newnode.add_child(second_cluster_mrca_node)
-      second_cluster_mrca_node.parent_node = newnode
-      # update splits of the resulting tree
-      Star_Tree_Initial.update_splits(delete_outdegree_one=False)
-      
-    elif (len(clust_species_list[min_idx_i]) > 1) and (len(clust_species_list[min_idx_j]) == 1):
-      # comment - sourya
-      #first_cluster_mrca_node = Star_Tree_Initial.mrca(taxon_labels=clust_species_list[min_idx_i])
-      # add - sourya
-      first_cluster_mrca_node = Find_MRCA(Star_Tree_Initial, clust_species_list[min_idx_i])
-      # end add - sourya
-      second_cluster_leaf_node = Star_Tree_Initial.find_node_with_taxon_label(clust_species_list[min_idx_j][0])
-      # comment - sourya
-      #all_taxa_mrca_node = Star_Tree_Initial.mrca(taxon_labels=taxa_list)
-      # add - sourya
-      all_taxa_mrca_node = Find_MRCA(Star_Tree_Initial, taxa_list)
-      # end add - sourya
-      if (DEBUG_LEVEL >= 2):
-	fp = open(Output_Text_File, 'a')
-	fp.write('\n label of first_cluster_mrca_node: ' + str(Node_Label(first_cluster_mrca_node)))      
-	fp.write('\n label of second_cluster_mrca_node: ' + str(Node_Label(second_cluster_leaf_node)))
-	fp.write('\n label of all_taxa_mrca_node: ' + str(Node_Label(all_taxa_mrca_node)))
-	fp.close()
-      
-      # create new internal node 
-      newnode = dendropy.Node()
-      # its parent node will be the previous MRCA node of all the taxa in two clusters
-      all_taxa_mrca_node.add_child(newnode)
-      newnode.parent_node = all_taxa_mrca_node
-      all_taxa_mrca_node.remove_child(first_cluster_mrca_node)
-      first_cluster_mrca_node.parent_node = None
-      all_taxa_mrca_node.remove_child(second_cluster_leaf_node)
-      second_cluster_leaf_node.parent_node = None
-      # add these individual clusters' MRCA node as its children
-      newnode.add_child(first_cluster_mrca_node)
-      first_cluster_mrca_node.parent_node = newnode
-      newnode.add_child(second_cluster_leaf_node)
-      second_cluster_leaf_node.parent_node = newnode
-      # update splits of the resulting tree
-      Star_Tree_Initial.update_splits(delete_outdegree_one=False)
-      
-    # case 4 - when both child clusters are leaf nodes 
-    else:
-      first_cluster_leaf_node = Star_Tree_Initial.find_node_with_taxon_label(clust_species_list[min_idx_i][0])
-      second_cluster_leaf_node = Star_Tree_Initial.find_node_with_taxon_label(clust_species_list[min_idx_j][0])
-      # comment - sourya
-      #all_taxa_mrca_node = Star_Tree_Initial.mrca(taxon_labels=taxa_list)
-      # add - sourya
-      all_taxa_mrca_node = Find_MRCA(Star_Tree_Initial, taxa_list)
-      # end add - sourya      
-      if (DEBUG_LEVEL >= 2):
-	fp = open(Output_Text_File, 'a')
-	fp.write('\n first cluster is a leaf - its label: ' + str(Node_Label(first_cluster_leaf_node)))      
-	fp.write('\n second cluster is a leaf - its label: ' + str(Node_Label(second_cluster_leaf_node)))
-	fp.write('\n label of all_taxa_mrca_node: ' + str(Node_Label(all_taxa_mrca_node)))
-	fp.close()
-      
-      # create new internal node 
-      newnode = dendropy.Node()
-      # its parent node will be the previous MRCA node of all the taxa in two clusters
-      all_taxa_mrca_node.add_child(newnode)
-      newnode.parent_node = all_taxa_mrca_node
-      all_taxa_mrca_node.remove_child(first_cluster_leaf_node)
-      first_cluster_leaf_node.parent_node = None
-      all_taxa_mrca_node.remove_child(second_cluster_leaf_node)
-      second_cluster_leaf_node.parent_node = None
-      # add these individual clusters' MRCA node as its children
-      newnode.add_child(first_cluster_leaf_node)
-      first_cluster_leaf_node.parent_node = newnode
-      newnode.add_child(second_cluster_leaf_node)
-      second_cluster_leaf_node.parent_node = newnode
-      # update splits of the resulting tree
-      Star_Tree_Initial.update_splits(delete_outdegree_one=False)
+	if (METHOD_USED == ProdAcRNJXL) or (METHOD_USED == RankAcRNJXL) or \
+		(METHOD_USED == ProdRNJXL) or (METHOD_USED == RankRNJXL):
+		# we allocate matrices containing LCA rank among individual couplets
+		XLVal_DistMat_ClustPair_NJ = numpy.zeros((no_of_taxa_clust, no_of_taxa_clust), dtype=numpy.float)
+		# allocate one new square matrix which will contain the normalized mean LCA rank
+		# used in NJ iterations
+		Norm_XLVal_DistMat_ClustPair_NJ = numpy.zeros((no_of_taxa_clust, no_of_taxa_clust), dtype=numpy.float)
 
-    #---------------------------------------------------------------------
-    if (DEBUG_LEVEL >= 2):
-      fp = open(Output_Text_File, 'a')
-      fp.write('\n label of newnode: ' + str(Node_Label(newnode)))
-      fp.write('\n label of all taxa mrca node (recomputed): ' + str(Node_Label(all_taxa_mrca_node)))      
-      #fp.write('\n before inserting row col, Mean_DistMat_ClustPair_NJ dimension: ' + str(Mean_DistMat_ClustPair_NJ.size))
-      fp.close()
+	"""
+	fill input distance matrices using accumulated coalescence rank information
+	"""
+	Fill_DistMat_CoalRankInfo(Mean_DistMat_ClustPair_NJ, METHOD_USED, ACC_RANK_DIST_MAT_TYPE)
 
-    # adjust the Mean_DistMat_ClustPair_NJ by inserting one new row and column corresponding to the new cluster
-    # and then deleting the information of earlier two clusters
-    # first append one row
-    Mean_DistMat_ClustPair_NJ = numpy.vstack((Mean_DistMat_ClustPair_NJ, numpy.zeros((1, no_of_taxa_clust), dtype=numpy.int)))	#int
-    # then append one column
-    Mean_DistMat_ClustPair_NJ = numpy.hstack((Mean_DistMat_ClustPair_NJ, numpy.zeros((no_of_taxa_clust + 1, 1), dtype=numpy.int)))	#int
-    # now reshape the distance matrix
-    Mean_DistMat_ClustPair_NJ = numpy.reshape(Mean_DistMat_ClustPair_NJ, ((no_of_taxa_clust + 1), (no_of_taxa_clust + 1)), order='C')
-    
-    #if (DEBUG_LEVEL > 2):
-      #fp = open(Output_Text_File, 'a')
-      #fp.write('\n after inserting row col, Mean_DistMat_ClustPair_NJ dimension: ' + str(Mean_DistMat_ClustPair_NJ.size))
-      #fp.close()
-    
-    if (METHOD_USED == AcRMNJXL):
-      # apply these operations on the LCA matrix as well
-      LCARank_DistMat_ClustPair_NJ = numpy.vstack((LCARank_DistMat_ClustPair_NJ, numpy.zeros((1, no_of_taxa_clust), dtype=numpy.int)))
-      LCARank_DistMat_ClustPair_NJ = numpy.hstack((LCARank_DistMat_ClustPair_NJ, numpy.zeros((no_of_taxa_clust + 1, 1), dtype=numpy.int)))
-      LCARank_DistMat_ClustPair_NJ = numpy.reshape(LCARank_DistMat_ClustPair_NJ, ((no_of_taxa_clust + 1), (no_of_taxa_clust + 1)), order='C')
-    
-    # add taxa_list as a new element of clust_species_list
-    clust_species_list.append(taxa_list)          
-    
-    # now recompute the entries of this new row and column (which is indexed by no_of_taxa_clust), according to the NJ principle
-    # compute Mean_DistMat_ClustPair_NJ[no_of_taxa_clust][m] entries where m != min_idx_i and m != min_idx_j
-    for m in range(no_of_taxa_clust):
-      if (m == min_idx_i) or (m == min_idx_j):
-	continue
-      Mean_DistMat_ClustPair_NJ[no_of_taxa_clust][m] = \
-	(Mean_DistMat_ClustPair_NJ[min_idx_i][m] + Mean_DistMat_ClustPair_NJ[min_idx_j][m] - Mean_DistMat_ClustPair_NJ[min_idx_i][min_idx_j]) / 2
-      Mean_DistMat_ClustPair_NJ[m][no_of_taxa_clust] = Mean_DistMat_ClustPair_NJ[no_of_taxa_clust][m]
-	      
-      if (METHOD_USED == AcRMNJXL): 
-	#----------------------------------------------
-	# update the matrix containing LCA rank
-	#----------------------------------------------
-	LCARank_DistMat_ClustPair_NJ[no_of_taxa_clust][m] = \
-	  max(LCARank_DistMat_ClustPair_NJ[min_idx_i][m], LCARank_DistMat_ClustPair_NJ[min_idx_j][m]) - 1
-	LCARank_DistMat_ClustPair_NJ[m][no_of_taxa_clust] = LCARank_DistMat_ClustPair_NJ[no_of_taxa_clust][m]
-	      
-    # now remove the rows and columns corresponding to min_idx_i and min_idx_j
-    Mean_DistMat_ClustPair_NJ = numpy.delete(Mean_DistMat_ClustPair_NJ, (min_idx_i), axis=0)	# delete the row
-    Mean_DistMat_ClustPair_NJ = numpy.delete(Mean_DistMat_ClustPair_NJ, (min_idx_i), axis=1)	# delete the column
-    Mean_DistMat_ClustPair_NJ = numpy.delete(Mean_DistMat_ClustPair_NJ, (min_idx_j - 1), axis=0)	# delete the row
-    Mean_DistMat_ClustPair_NJ = numpy.delete(Mean_DistMat_ClustPair_NJ, (min_idx_j - 1), axis=1)	# delete the column
+	if (METHOD_USED == ProdAcRNJXL) or (METHOD_USED == RankAcRNJXL) or \
+		(METHOD_USED == ProdRNJXL) or (METHOD_USED == RankRNJXL): 
+		Fill_DistMat_ExcessGeneCount(XLVal_DistMat_ClustPair_NJ, METHOD_USED, XL_DIST_MAT_TYPE)
 
-    if (METHOD_USED == AcRMNJXL):
-      # update the LCA rank matrix as well
-      LCARank_DistMat_ClustPair_NJ = numpy.delete(LCARank_DistMat_ClustPair_NJ, (min_idx_i), axis=0)	# delete the row
-      LCARank_DistMat_ClustPair_NJ = numpy.delete(LCARank_DistMat_ClustPair_NJ, (min_idx_i), axis=1)	# delete the column
-      LCARank_DistMat_ClustPair_NJ = numpy.delete(LCARank_DistMat_ClustPair_NJ, (min_idx_j - 1), axis=0)	# delete the row
-      LCARank_DistMat_ClustPair_NJ = numpy.delete(LCARank_DistMat_ClustPair_NJ, (min_idx_j - 1), axis=1)	# delete the column
+	#--------------------------------------------------------
+	# loop to execute the agglomerative clustering
+	while(no_of_taxa_clust > 2): 
 
-    # clear Norm_Mean_DistMat_ClustPair_NJ
-    Norm_Mean_DistMat_ClustPair_NJ = numpy.delete(Norm_Mean_DistMat_ClustPair_NJ, (min_idx_i), axis=0)	# delete the row
-    Norm_Mean_DistMat_ClustPair_NJ = numpy.delete(Norm_Mean_DistMat_ClustPair_NJ, (min_idx_i), axis=1)	# delete the column
-    Norm_Mean_DistMat_ClustPair_NJ.fill(0)
-    
-    if (METHOD_USED == AcRMNJXL):
-      # clear norm LCA matrix
-      Norm_LCARank_DistMat_ClustPair_NJ = numpy.delete(Norm_LCARank_DistMat_ClustPair_NJ, (min_idx_i), axis=0)	# delete the row
-      Norm_LCARank_DistMat_ClustPair_NJ = numpy.delete(Norm_LCARank_DistMat_ClustPair_NJ, (min_idx_i), axis=1)	# delete the column
-      Norm_LCARank_DistMat_ClustPair_NJ.fill(0)    
-    
-    # remove individual clusters' taxa information from the clust_species_list
-    clust_species_list.pop(min_idx_i)
-    clust_species_list.pop(min_idx_j - 1)
-    
-    # decrement the number of clusters considered
-    no_of_taxa_clust = no_of_taxa_clust - 1
+		if (DEBUG_LEVEL >= 2):
+			fp = open(Output_Text_File, 'a')
+			fp.write('\n iteration start --- number of clusters: ' + str(no_of_taxa_clust))
+			fp.write('\n clust_species_list : ' + str(clust_species_list))
+			fp.close()
+			PrintMatrixContent(no_of_taxa_clust, clust_species_list, Mean_DistMat_ClustPair_NJ, \
+				'Mean_DistMat_ClustPair_NJ', Output_Text_File)
+			if (METHOD_USED == ProdAcRNJXL) or (METHOD_USED == RankAcRNJXL) or \
+				(METHOD_USED == ProdRNJXL) or (METHOD_USED == RankRNJXL):
+				PrintMatrixContent(no_of_taxa_clust, clust_species_list, XLVal_DistMat_ClustPair_NJ, \
+					'XLVal_DistMat_ClustPair_NJ', Output_Text_File)
+					
+					
+		# for individual cluster Cx, it contains XL(Cx, :) - sum of extra lineages considering the cluster pair 
+		# (Cx, Cy) for all other clusters Cy
+		sum_DistMat_Clust = []
+		ComputeSumRowsDistMat(sum_DistMat_Clust, no_of_taxa_clust, Mean_DistMat_ClustPair_NJ, \
+			Output_Text_File, 'sum_DistMat_Clust')
+		if (METHOD_USED == ProdAcRNJXL) or (METHOD_USED == RankAcRNJXL) or \
+			(METHOD_USED == ProdRNJXL) or (METHOD_USED == RankRNJXL):
+			sum_XLVal_Clust = []
+			ComputeSumRowsDistMat(sum_XLVal_Clust, no_of_taxa_clust, XLVal_DistMat_ClustPair_NJ, \
+				Output_Text_File, 'sum_XLVal_Clust')
+		
+		"""
+		fill the normalized matrix entries
+		depending on the NJ type method employed
+		"""
+		if (NJ_RULE_USED == AGGLO_CLUST):
+			FillAggloClustNormalizeMatrix(Norm_Mean_DistMat_ClustPair_NJ, \
+				Mean_DistMat_ClustPair_NJ, sum_DistMat_Clust, no_of_taxa_clust)
+			if (METHOD_USED == ProdAcRNJXL) or (METHOD_USED == RankAcRNJXL) or \
+				(METHOD_USED == ProdRNJXL) or (METHOD_USED == RankRNJXL):
+				FillAggloClustNormalizeMatrix(Norm_XLVal_DistMat_ClustPair_NJ, \
+					XLVal_DistMat_ClustPair_NJ, sum_XLVal_Clust, no_of_taxa_clust)
+		else:
+			FillNJNormalizeMatrix(Norm_Mean_DistMat_ClustPair_NJ, Mean_DistMat_ClustPair_NJ, \
+				sum_DistMat_Clust, no_of_taxa_clust)
+			if (METHOD_USED == ProdAcRNJXL) or (METHOD_USED == RankAcRNJXL) or \
+				(METHOD_USED == ProdRNJXL) or (METHOD_USED == RankRNJXL):
+				FillNJNormalizeMatrix(Norm_XLVal_DistMat_ClustPair_NJ, XLVal_DistMat_ClustPair_NJ, \
+					sum_XLVal_Clust, no_of_taxa_clust)
 
-  return
+		if (DEBUG_LEVEL >= 2):
+			PrintMatrixContent(no_of_taxa_clust, clust_species_list, Norm_Mean_DistMat_ClustPair_NJ, \
+				'Norm_Mean_DistMat_ClustPair_NJ', Output_Text_File)
+			if 0:	#(METHOD_USED == ProdAcRNJXL) or (METHOD_USED == RankAcRNJXL) or (METHOD_USED == ProdRNJXL) or (METHOD_USED == RankRNJXL): 
+				PrintMatrixContent(no_of_taxa_clust, clust_species_list, Norm_XLVal_DistMat_ClustPair_NJ, \
+					'Norm_XLVal_DistMat_ClustPair_NJ', Output_Text_File)
+			
+		#--------------------------------------------------
+		"""
+		find the cluster pairs having minimum distance values
+		"""
+		if (METHOD_USED == ProdAcRNJXL) or (METHOD_USED == ProdRNJXL):
+			"""
+			this is earlier product of XL and Rank and minimum finding based method
+			"""
+			min_idx_i, min_idx_j = Find_Unique_Min_XL(Mean_DistMat_ClustPair_NJ, Norm_Mean_DistMat_ClustPair_NJ, \
+				XLVal_DistMat_ClustPair_NJ, Norm_XLVal_DistMat_ClustPair_NJ, \
+					no_of_taxa_clust, clust_species_list, NJ_RULE_USED)
+			
+		elif (METHOD_USED == RankAcRNJXL) or (METHOD_USED == RankRNJXL):
+			"""
+			our proposed rank computation for both distance matrices
+			and selecting cluster pairs based on minimum rank sum 
+			"""
+			min_idx_i, min_idx_j = Find_Unique_Min_RankBased(Mean_DistMat_ClustPair_NJ, \
+				Norm_Mean_DistMat_ClustPair_NJ, \
+				XLVal_DistMat_ClustPair_NJ, Norm_XLVal_DistMat_ClustPair_NJ, no_of_taxa_clust, \
+					clust_species_list, Output_Text_File, RANK_AGGREGATE_METHOD_TYPE)
+
+		else:
+			min_idx_i, min_idx_j = Find_Unique_Min(Norm_Mean_DistMat_ClustPair_NJ, no_of_taxa_clust)
+		
+		#---------------------------------------------------------------  
+		# note down the taxa list in these two indices (min_idx_i and min_idx_j) 
+		# of the clust_species_list
+		taxa_list = []
+		for x in clust_species_list[min_idx_i]:
+			taxa_list.append(x)
+		for x in clust_species_list[min_idx_j]:
+			taxa_list.append(x)
+
+		if (DEBUG_LEVEL >= 2):
+			fp = open(Output_Text_File, 'a')
+			fp.write('\n min_idx_i ' + str(min_idx_i) + ' min_idx_j : ' + str(min_idx_j))
+			fp.write('\n min_idx_i species list ' + str(clust_species_list[min_idx_i]))
+			fp.write('\n min_idx_j species list ' + str(clust_species_list[min_idx_j]))
+			fp.write('\n complete taxa list (union) ' + str(taxa_list))
+			fp.close()
+		#----------------------------------------------------
+		"""
+		now we merge the pair of clusters pointed by these indices
+		"""
+		Curr_tree = Merge_Cluster_Pair(Curr_tree, clust_species_list, \
+			min_idx_i, min_idx_j, taxa_list, Output_Text_File)
+		#---------------------------------------------------------------------
+		# adjust the Mean_DistMat_ClustPair_NJ by inserting one new row and column corresponding to the new cluster
+		# and then deleting the information of earlier two clusters
+		# first append one row
+		Mean_DistMat_ClustPair_NJ = numpy.vstack((Mean_DistMat_ClustPair_NJ, \
+			numpy.zeros((1, no_of_taxa_clust), dtype=numpy.float)))
+		# then append one column
+		Mean_DistMat_ClustPair_NJ = numpy.hstack((Mean_DistMat_ClustPair_NJ, \
+			numpy.zeros((no_of_taxa_clust + 1, 1), dtype=numpy.float)))
+		# now reshape the distance matrix
+		Mean_DistMat_ClustPair_NJ = numpy.reshape(Mean_DistMat_ClustPair_NJ, \
+			((no_of_taxa_clust + 1), (no_of_taxa_clust + 1)), order='C')
+		
+		if (METHOD_USED == ProdAcRNJXL) or (METHOD_USED == RankAcRNJXL) or \
+			(METHOD_USED == ProdRNJXL) or (METHOD_USED == RankRNJXL):
+			# apply these operations on the XL matrix as well
+			XLVal_DistMat_ClustPair_NJ = numpy.vstack((XLVal_DistMat_ClustPair_NJ, \
+				numpy.zeros((1, no_of_taxa_clust), dtype=numpy.float)))
+			XLVal_DistMat_ClustPair_NJ = numpy.hstack((XLVal_DistMat_ClustPair_NJ, \
+				numpy.zeros((no_of_taxa_clust + 1, 1), dtype=numpy.float)))
+			XLVal_DistMat_ClustPair_NJ = numpy.reshape(XLVal_DistMat_ClustPair_NJ, \
+				((no_of_taxa_clust + 1), (no_of_taxa_clust + 1)), order='C')
+		
+		# add taxa_list as a new element of clust_species_list
+		clust_species_list.append(taxa_list)          
+		
+		# now recompute the entries of this new row and column (which is indexed by no_of_taxa_clust), according to the NJ principle
+		# compute Mean_DistMat_ClustPair_NJ[no_of_taxa_clust][m] entries where m != min_idx_i and m != min_idx_j
+		for m in range(no_of_taxa_clust):
+			if (m == min_idx_i) or (m == min_idx_j):
+				continue
+			#-------------------------------
+			## comment - sourya
+			#Mean_DistMat_ClustPair_NJ[no_of_taxa_clust][m] = (Mean_DistMat_ClustPair_NJ[min_idx_i][m] + \
+				#Mean_DistMat_ClustPair_NJ[min_idx_j][m] - Mean_DistMat_ClustPair_NJ[min_idx_i][min_idx_j]) / 2
+			
+			# modify - sourya
+			# did not produce good performance - sourya
+			#Mean_DistMat_ClustPair_NJ[no_of_taxa_clust][m] = (Mean_DistMat_ClustPair_NJ[min_idx_i][m] + \
+				#Mean_DistMat_ClustPair_NJ[min_idx_j][m] - 2 * Mean_DistMat_ClustPair_NJ[min_idx_i][min_idx_j]) / 2.0
+
+			Mean_DistMat_ClustPair_NJ[no_of_taxa_clust][m] = (Mean_DistMat_ClustPair_NJ[min_idx_i][m] + Mean_DistMat_ClustPair_NJ[min_idx_j][m]) / 2.0
+			#-------------------------------
+			
+			# symmetric property
+			Mean_DistMat_ClustPair_NJ[m][no_of_taxa_clust] = Mean_DistMat_ClustPair_NJ[no_of_taxa_clust][m]
+				
+			if (METHOD_USED == ProdAcRNJXL) or (METHOD_USED == RankAcRNJXL) or \
+				(METHOD_USED == ProdRNJXL) or (METHOD_USED == RankRNJXL): 
+				#----------------------------------------------
+				# update the matrix containing excess gene count
+				#----------------------------------------------
+				if (XL_DISTMAT_UPDATE_METHOD == 1):
+					XLVal_DistMat_ClustPair_NJ[no_of_taxa_clust][m] = \
+						(XLVal_DistMat_ClustPair_NJ[min_idx_i][m] + XLVal_DistMat_ClustPair_NJ[min_idx_j][m]) / 2.0
+				else:
+					# max of 3 operation
+					XLVal_DistMat_ClustPair_NJ[no_of_taxa_clust][m] = max(XLVal_DistMat_ClustPair_NJ[min_idx_i][m], \
+						XLVal_DistMat_ClustPair_NJ[min_idx_j][m], XLVal_DistMat_ClustPair_NJ[min_idx_i][min_idx_j])
+				
+				# symmetric property
+				XLVal_DistMat_ClustPair_NJ[m][no_of_taxa_clust] = XLVal_DistMat_ClustPair_NJ[no_of_taxa_clust][m]
+				
+		# now remove the rows and columns corresponding to min_idx_i and min_idx_j
+		Mean_DistMat_ClustPair_NJ = numpy.delete(Mean_DistMat_ClustPair_NJ, (min_idx_i), axis=0)	# delete the row
+		Mean_DistMat_ClustPair_NJ = numpy.delete(Mean_DistMat_ClustPair_NJ, (min_idx_i), axis=1)	# delete the column
+		Mean_DistMat_ClustPair_NJ = numpy.delete(Mean_DistMat_ClustPair_NJ, (min_idx_j - 1), axis=0)	# delete the row
+		Mean_DistMat_ClustPair_NJ = numpy.delete(Mean_DistMat_ClustPair_NJ, (min_idx_j - 1), axis=1)	# delete the column
+
+		if (METHOD_USED == ProdAcRNJXL) or (METHOD_USED == RankAcRNJXL) or \
+			(METHOD_USED == ProdRNJXL) or (METHOD_USED == RankRNJXL):
+			# update the LCA rank matrix as well
+			XLVal_DistMat_ClustPair_NJ = numpy.delete(XLVal_DistMat_ClustPair_NJ, (min_idx_i), axis=0)	# delete the row
+			XLVal_DistMat_ClustPair_NJ = numpy.delete(XLVal_DistMat_ClustPair_NJ, (min_idx_i), axis=1)	# delete the column
+			XLVal_DistMat_ClustPair_NJ = numpy.delete(XLVal_DistMat_ClustPair_NJ, (min_idx_j - 1), axis=0)	# delete the row
+			XLVal_DistMat_ClustPair_NJ = numpy.delete(XLVal_DistMat_ClustPair_NJ, (min_idx_j - 1), axis=1)	# delete the column
+
+		# clear Norm_Mean_DistMat_ClustPair_NJ
+		Norm_Mean_DistMat_ClustPair_NJ = numpy.delete(Norm_Mean_DistMat_ClustPair_NJ, (min_idx_i), axis=0)	# delete the row
+		Norm_Mean_DistMat_ClustPair_NJ = numpy.delete(Norm_Mean_DistMat_ClustPair_NJ, (min_idx_i), axis=1)	# delete the column
+		Norm_Mean_DistMat_ClustPair_NJ.fill(0)
+		
+		if (METHOD_USED == ProdAcRNJXL) or (METHOD_USED == RankAcRNJXL) or \
+			(METHOD_USED == ProdRNJXL) or (METHOD_USED == RankRNJXL):
+			# clear norm LCA matrix
+			Norm_XLVal_DistMat_ClustPair_NJ = numpy.delete(Norm_XLVal_DistMat_ClustPair_NJ, (min_idx_i), axis=0)	# delete the row
+			Norm_XLVal_DistMat_ClustPair_NJ = numpy.delete(Norm_XLVal_DistMat_ClustPair_NJ, (min_idx_i), axis=1)	# delete the column
+			Norm_XLVal_DistMat_ClustPair_NJ.fill(0)    
+		
+		# remove individual clusters' taxa information from the clust_species_list
+		clust_species_list.pop(min_idx_i)
+		clust_species_list.pop(min_idx_j - 1)
+		
+		# decrement the number of clusters considered
+		no_of_taxa_clust = no_of_taxa_clust - 1
+
+	return
