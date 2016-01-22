@@ -1,10 +1,11 @@
 #!/usr/bin/env python
 
 """
-program for species tree estimation
-computes four criteria - 
-1) Level / branch count information
-2) Accumulated Rank statistics 
+this is a program for species tree estimation from input gene trees having ILS
+following couplet based features are to be computed for all the gene trees
+their average (or filtered average) are used for species tree estimation
+1) Accumulated Coalescence Rank statistics 
+2) Excess gene leaf count
 """
 
 import dendropy
@@ -15,20 +16,24 @@ import os
 import numpy
 import sys
 
-# these variables store the respective parameters of input gene trees
+# This is the complete list of taxa covered in the input gene trees
 COMPLETE_INPUT_TAXA_LIST = []
 
-""" this dictionary defines the taxa pair relations
-each entry is indexed by two nodes """
+""" 
+this dictionary defines the taxa pair relations
+each entry is indexed by two taxa 
+"""
 TaxaPair_Reln_Dict = dict()
 
 # this is the debug level
 # set for printing the necessary information
 DEBUG_LEVEL = 0
 
-# variables depicting the method employed for species tree construction
-# first two methods use average statistics of the coalescence rank or the branch count
-# last two methods employ the mode statistics
+#---------------------------------
+"""
+various methods previously implemented for species tree generation
+currently only ProdAcRNJXL method is used 
+"""
 
 # accumulated coalescence rank with average statistics
 AcRNJ = 1
@@ -47,15 +52,17 @@ ProdRNJXL = 4
 
 # minimum of accumulated coalescence rank and excess gene count
 RankRNJXL = 5
+#---------------------------------
 
 # variables used to denote whether we use traditional NJ method
 # or use a variant of it, namely the agglomerative clustering
-TRADITIONAL_NJ = 1
+TRADITIONAL_NJ = 1	# it is used as the final version
 AGGLO_CLUST = 2
 
-# add - sourya
+"""
+variables depicting the filtered mode based average parameters
+"""
 MODE_PERCENT = 0.5
-
 MODE_BIN_COUNT = 40
 
 # this list corresponds to various rank merging algorithm
@@ -73,9 +80,8 @@ class Reln_TaxaPair(object):
 		self.tree_support_count = 0        
 		# this list contains the accumulated sum of ranks of the internal nodes
 		# present between individual couplets, for all the gene trees
-		# corresponds to AcRNJ or AcRMNJ
 		self.accumulated_rank_list = []
-		# this is the extra lineage count list for this couplet
+		# this is the excess gene leaf count list for this couplet
 		self.XL_val_list = []            
 		"""
 		this is a variable containing the binned average of the XL values
@@ -96,8 +102,7 @@ class Reln_TaxaPair(object):
 		"""
 		self.binned_avg_AcR = -1
 		
-	# this function adds the count of tree according to the support of 
-	# corresponding couplet in the input tree
+	# this function adds the count of tree if the input couplet is present in this tree
 	def _IncrSupportTreeCount(self):
 		self.tree_support_count = self.tree_support_count + 1
 					
@@ -217,7 +222,9 @@ class Reln_TaxaPair(object):
 			
 		return self.binned_avg_XL
 	#-----------------------------------------------
-
+	"""
+	this function adds the accumulated coalescence rank information in the given list
+	"""
 	def _AddAccumulatedRank(self, val):
 		self.accumulated_rank_list.append(val)
 		
@@ -274,7 +281,10 @@ class Reln_TaxaPair(object):
 		#return (candidate_score_sum * 1.0) / candidate_freq_sum        
 
 	#-----------------------------------------------
-
+	"""
+	filtered averaging of the accumulated coalescence rank
+	used in the final version of the code 
+	"""
 	def _GetMultiModeAccumulatedRank(self, Output_Text_File=None):
 		if (self.binned_avg_AcR == -1):
 			

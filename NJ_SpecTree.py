@@ -641,6 +641,10 @@ def Form_Species_Tree_NJ_Cluster(Curr_tree, COMPLETE_INPUT_TAXA_LIST, METHOD_USE
 			#Mean_DistMat_ClustPair_NJ[no_of_taxa_clust][m] = (Mean_DistMat_ClustPair_NJ[min_idx_i][m] + \
 				#Mean_DistMat_ClustPair_NJ[min_idx_j][m] - 2 * Mean_DistMat_ClustPair_NJ[min_idx_i][min_idx_j]) / 2.0
 
+			"""
+			we have used simple averaging to approximate the accumulated coalescence rank measure
+			this averaging produces the best performance
+			"""
 			Mean_DistMat_ClustPair_NJ[no_of_taxa_clust][m] = (Mean_DistMat_ClustPair_NJ[min_idx_i][m] + Mean_DistMat_ClustPair_NJ[min_idx_j][m]) / 2.0
 			#-------------------------------
 			
