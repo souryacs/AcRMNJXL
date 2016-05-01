@@ -15,6 +15,7 @@ import time
 import os
 import numpy
 import sys
+import matplotlib.pyplot as plt	# comment - sourya
 
 # This is the complete list of taxa covered in the input gene trees
 COMPLETE_INPUT_TAXA_LIST = []
@@ -62,14 +63,32 @@ AGGLO_CLUST = 2
 """
 variables depicting the filtered mode based average parameters
 """
-MODE_PERCENT = 0.5
+#0.5 was employed in the AiCOB paper
+AcR_MODE_PERCENT = 0.25	#0.5
+
+# in AiCOB paper, simple averaging of XL was used, without modal average
+XL_MODE_PERCENT = 0.5	#0.25
+
 MODE_BIN_COUNT = 40
 
 # this list corresponds to various rank merging algorithm
 SIMPLE_SUM_RANK = 1
 MEAN_RECIPROCAL_RANK = 2
 
-##-----------------------------------------------------
+#"""
+#this is a flag variable, which when 0, enables the couplet rank and coalescence rank measures
+#to be written in different excel files
+#default value of this variable is 0
+#"""
+#RANK_WRITE_DEBUG = 0
+
+#AcR_Complete_List = []
+#Coal_Rank_Complete_List = []
+
+#Coal_Rank_Filename = 'LCA_Rank.jpg'
+#AcR_Filename = 'AcR.jpg'
+
+#-----------------------------------------------------
 """ 
 this class defines the connectivity relationship between a pair of taxa
 initially the information are obtained from the input source trees
@@ -123,52 +142,6 @@ class Reln_TaxaPair(object):
 			self.median_XL = numpy.median(numpy.array(self.XL_val_list))
 		return self.median_XL
 				
-	#def _GetMultiModeXLVal(self):
-		#candidate_score_sum = 0
-		#candidate_freq_sum = 0
-		#curr_arr = numpy.array(self.XL_val_list)
-		## returns the counts of individual elements
-		## array size: max_elem + 1
-		#counts = numpy.bincount(curr_arr)
-		## remove the zero values 
-		#values = numpy.nonzero(counts)[0]
-		## mode value and corresponding frequency
-		#mode_val = numpy.argmax(counts)
-		#mode_count = numpy.max(counts)
-		## check for the values having frequency at least half of the maximum frequency
-		#for v in values:
-			#if (counts[v] >= 0.25 * mode_count):
-				#candidate_score_sum = candidate_score_sum + (v * counts[v])
-				#candidate_freq_sum = candidate_freq_sum + counts[v]
-		#return (candidate_score_sum * 1.0) / candidate_freq_sum                
-
-	#def _GetMultiModeXLVal(self):
-		#candidate_score_sum = 0
-		#candidate_freq_sum = 0
-		#curr_arr = numpy.array(self.XL_val_list)
-		#uniqw, inverse = numpy.unique(curr_arr, return_inverse=True)
-		#counts = numpy.bincount(inverse)
-		## remove the zero values 
-		#values = numpy.nonzero(counts)[0]
-		## mode value and corresponding frequency
-		#mode_count = numpy.max(counts)
-		
-		##print '*****************'
-		##print 'curr_arr: ', curr_arr
-		##print 'uniqw: ', uniqw
-		##print 'inverse: ', inverse
-		##print 'counts: ', counts
-		##print 'values: ', values
-		##print 'mode_count: ', mode_count
-		
-		## check for the values having frequency at least half of the maximum frequency
-		#for v in values:
-			#if (counts[v] >= MODE_PERCENT * mode_count):
-				##candidate_score_sum = candidate_score_sum + (v * counts[v])	# comment - sourya
-				#candidate_score_sum = candidate_score_sum + (uniqw[v] * counts[v])	# add - sourya
-				#candidate_freq_sum = candidate_freq_sum + counts[v]
-		#return (candidate_score_sum * 1.0) / candidate_freq_sum        
-
 	#-----------------------------------------------
 	def _GetMultiModeXLVal(self, Output_Text_File=None):
 		if (self.binned_avg_XL == -1):
@@ -204,7 +177,7 @@ class Reln_TaxaPair(object):
 			num = 0
 			denom = 0
 			for i in range(MODE_BIN_COUNT):
-				if (len_list[i] >= (MODE_PERCENT * max_freq)):
+				if (len_list[i] >= (XL_MODE_PERCENT * max_freq)):
 					list_start_idx = sum(len_list[:i])
 					list_end_idx = list_start_idx + len_list[i] - 1
 					value_sum = sum(self.XL_val_list[list_start_idx:(list_end_idx+1)])
@@ -233,52 +206,6 @@ class Reln_TaxaPair(object):
 							
 	def _GetMedianAccumulatedRank(self):
 		return numpy.median(numpy.array(self.accumulated_rank_list))
-							
-	#def _GetMultiModeAccumulatedRank(self):
-		#candidate_score_sum = 0
-		#candidate_freq_sum = 0
-		#curr_arr = numpy.array(self.accumulated_rank_list)
-		## returns the counts of individual elements
-		## array size: max_elem + 1
-		#counts = numpy.bincount(curr_arr)
-		## remove the zero values 
-		#values = numpy.nonzero(counts)[0]
-		## mode value and corresponding frequency
-		#mode_val = numpy.argmax(counts)
-		#mode_count = numpy.max(counts)
-		## check for the values having frequency at least half of the maximum frequency
-		#for v in values:
-			#if (counts[v] >= 0.25 * mode_count):
-				#candidate_score_sum = candidate_score_sum + (v * counts[v])
-				#candidate_freq_sum = candidate_freq_sum + counts[v]
-		#return (candidate_score_sum * 1.0) / candidate_freq_sum
-
-	#def _GetMultiModeAccumulatedRank(self):
-		#candidate_score_sum = 0
-		#candidate_freq_sum = 0
-		#curr_arr = numpy.array(self.accumulated_rank_list)
-		#uniqw, inverse = numpy.unique(curr_arr, return_inverse=True)
-		#counts = numpy.bincount(inverse)
-		## remove the zero values 
-		#values = numpy.nonzero(counts)[0]
-		## mode value and corresponding frequency
-		#mode_count = numpy.max(counts)
-		
-		##print '*****************'
-		##print 'curr_arr: ', curr_arr
-		##print 'uniqw: ', uniqw
-		##print 'inverse: ', inverse
-		##print 'counts: ', counts
-		##print 'values: ', values
-		##print 'mode_count: ', mode_count
-		
-		## check for the values having frequency at least half of the maximum frequency
-		#for v in values:
-			#if (counts[v] >= MODE_PERCENT * mode_count):
-				##candidate_score_sum = candidate_score_sum + (v * counts[v])	# comment - sourya
-				#candidate_score_sum = candidate_score_sum + (uniqw[v] * counts[v])	# add - sourya
-				#candidate_freq_sum = candidate_freq_sum + counts[v]
-		#return (candidate_score_sum * 1.0) / candidate_freq_sum        
 
 	#-----------------------------------------------
 	"""
@@ -319,7 +246,7 @@ class Reln_TaxaPair(object):
 			num = 0
 			denom = 0
 			for i in range(MODE_BIN_COUNT):
-				if (len_list[i] >= (MODE_PERCENT * max_freq)):
+				if (len_list[i] >= (AcR_MODE_PERCENT * max_freq)):
 					list_start_idx = sum(len_list[:i])
 					list_end_idx = list_start_idx + len_list[i] - 1
 					value_sum = sum(self.accumulated_rank_list[list_start_idx:(list_end_idx+1)])
@@ -364,4 +291,41 @@ class Reln_TaxaPair(object):
 			fp.write('\n *** mode XL val : ' + str(self._GetMultiModeXLVal()))   
 		fp.close()
     
+		# sourya - debug
+		#font = {'family' : 'normal',
+						#'weight' : 'regular',
+						#'size'   : 16}
+
+		#plt.rc('font', **font)
+		
+		##if (key[0] == 'HOM' and key[1] == 'TAR') or (key[0] == 'MYO' and key[1] == 'TUR'):
+		#if (key[0] == 'SPE' and key[1] == 'OCH') or (key[0] == 'OTO' and key[1] == 'DIP'):
+			#fig1 = plt.figure()
+			#n1, bins1, patches1 = plt.hist(self.accumulated_rank_list, 37, normed=0, facecolor='green', alpha=0.75)
+			#xlabel_str = 'AcR(' + str(key[0]) + ',' + str(key[1]) + ')'
+			#plt.xlabel(xlabel_str, fontsize=24)
+			#plt.ylabel('Frequency', fontsize=24)
+			#title_str = 'Distribution of AcR for ' + str(key[0]) + ' and ' + str(key[1])
+			#plt.title(title_str, fontsize=24)
+			#plt.grid(True)
+			##plt.tight_layout()
+			#fig1.set_size_inches(10, 6)
+			#figname = 'accumulated_coalescence_rank_' + str(key[0]) + '_' + str(key[1]) + '.jpg'
+			#print 'figname: ', figname
+			#plt.savefig(figname)
+
+			#fig2 = plt.figure()
+			#n2, bins2, patches2 = plt.hist(self.XL_val_list, 37, normed=0, facecolor='green', alpha=0.75)
+			#xlabel_str = 'XL(' + str(key[0]) + ',' + str(key[1]) + ')'
+			#plt.xlabel(xlabel_str, fontsize=24)
+			#plt.ylabel('Frequency', fontsize=24)
+			#title_str = 'Distribution of XL for ' + str(key[0]) + ' and ' + str(key[1])
+			#plt.title(title_str, fontsize=24)
+			#plt.grid(True)
+			##plt.tight_layout()
+			#fig2.set_size_inches(10, 6)
+			#figname = 'extra_lineage_' + str(key[0]) + '_' + str(key[1]) + '.jpg'
+			#print 'figname: ', figname
+			#plt.savefig(figname)      
+		## end sourya - debug
       

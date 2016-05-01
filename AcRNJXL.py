@@ -100,25 +100,29 @@ def parse_options():
 				#type="int", \
 				#action="store", \
 				#dest="acc_rank_mat_type", \
-				#default=1, \
+				#default=7, \
 				#help="1 - Average of AcR / Rank \
 				#2 - median of AcR / Rank \
 				#3 - mode of AcR / Rank \
 				#4 - min(avg, median) of AcR / Rank \
 				#5 - min(avg , median, mode) of AcR / Rank \
-				#6 - min(median, mode) of AcR / Rank")     
+				#6 - min(median, mode) of AcR / Rank \
+				#7 - avg(avg, mode) of AcR / Rank \
+				#8 - min(avg, mode) of AcR / Rank")     
 
 	#parser.add_option("-d", "--distmat", \
 				#type="int", \
 				#action="store", \
 				#dest="dist_mat_type", \
-				#default=1, \
+				#default=7, \
 				#help="1 - Average of XL \
 				#2 - median of XL \
 				#3 - mode of XL \
 				#4 - min(avg, median) of XL \
 				#5 - min(avg , median, mode) of XL \
-				#6 - min(median, mode) of XL")     
+				#6 - min(median, mode) of XL \
+				#7 - avg(avg, mode) of XL \
+				#8 - min(avg, mode) of XL")     
 			
 	#parser.add_option("-u", "--update", \
 				#type="int", \
@@ -147,7 +151,7 @@ def parse_options():
 	return opts, args
   
 ##-----------------------------------------------------
-''' main function '''
+# main function
 def main():  
 	opts, args = parse_options()
 
@@ -167,12 +171,13 @@ def main():
 	METHOD_USED = ProdAcRNJXL	#opts.method_type
 	NJ_RULE_USED = TRADITIONAL_NJ	#opts.NJ_type
 	XL_DISTMAT_UPDATE_METHOD = 1	#opts.update_dist_mat
-	XL_DIST_MAT_TYPE = 1	#opts.dist_mat_type
 	OUTGROUP_TAXON_NAME = opts.outgroup_taxon_name
-	FRACT_ACC_RANK = 1	#opts.frac_rank
-	ACC_RANK_DIST_MAT_TYPE = 5	#opts.acc_rank_mat_type
+	FRACT_ACC_RANK = 1	#opts.frac_rank	#sourya
 	RANK_AGGREGATE_METHOD_TYPE = 1	#opts.Rank_Aggregate_Method_type	
-		
+	
+	XL_DIST_MAT_TYPE = 7	#opts.dist_mat_type		#7 #1
+	ACC_RANK_DIST_MAT_TYPE = 7	#opts.acc_rank_mat_type	#7	#5
+	
 	if (INPUT_FILENAME == ""):
 		print '******** THERE IS NO INPUT FILE (CONTAINING GENE TREE LIST) SPECIFIED - RETURN **********'
 		return
@@ -193,8 +198,11 @@ def main():
 		print 'dir_of_inp_file: ', dir_of_inp_file  
 
 	if (OUTPUT_FILENAME == ""):
-		# derive the output directory which will contain different output text results
+		## derive the output directory which will contain different output text results
+		#dir_of_curr_exec = dir_of_inp_file + 'AcRNJXL_C' + str(ACC_RANK_DIST_MAT_TYPE) + '_D' + str(XL_DIST_MAT_TYPE) \
+			#+ '_AM_' + str(AcR_MODE_PERCENT) + '_XM_' + str(XL_MODE_PERCENT)
 		dir_of_curr_exec = dir_of_inp_file + 'AcRNJXL'
+		
 		# output text file containing the results
 		Output_Text_File = dir_of_curr_exec + '/' + 'Complete_Desription.txt'
 		# create the directory
@@ -234,7 +242,9 @@ def main():
 		for i in range(len(taxa_labels_curr_tree)):
 			if taxa_labels_curr_tree[i] not in COMPLETE_INPUT_TAXA_LIST:
 				COMPLETE_INPUT_TAXA_LIST.append(taxa_labels_curr_tree[i])
-		
+	
+	#---------------------------------------------
+	
 	"""
 	from input trees, compute couplet based features - 1) accumulated coalescence rank, 2) excess gene leaf count
 	"""
@@ -258,7 +268,69 @@ def main():
 	if (DEBUG_LEVEL >= 2):
 		for coup in TaxaPair_Reln_Dict:
 			TaxaPair_Reln_Dict[coup]._PrintTaxaPairRelnInfo(coup, Output_Text_File, METHOD_USED)
+	
+	#---------------------------
+	# add - sourya
+	#if (RANK_WRITE_DEBUG == 1):
+		#-------------------------------------
+		## comment - sourya
+		
+		#if 0:
+			#"""
+			#plotting the coalescence rank information
+			#"""
+			#fig1 = plt.figure()
+			#n1, bins1, patches1 = plt.hist(Coal_Rank_Complete_List, len(COMPLETE_INPUT_TAXA_LIST), normed=0, facecolor='blue', alpha=0.75)
+			#xlabel_str = 'Coalescence Rank'
+			#plt.xlabel(xlabel_str, fontsize=24)
+			#plt.ylabel('Frequency', fontsize=24)
+			#title_str = 'Distribution of Coalescence rank for couplets'
+			#plt.title(title_str, fontsize=24)
+			#plt.grid(True)
+			##plt.tight_layout()
+			#fig1.set_size_inches(10, 6)
+			#plt.savefig(Coal_Rank_Filename)
+		
+			#"""
+			#plotting the accumulated coalescence rank information
+			#"""
+			#fig1 = plt.figure()
+			#n1, bins1, patches1 = plt.hist(AcR_Complete_List, (len(COMPLETE_INPUT_TAXA_LIST) * len(COMPLETE_INPUT_TAXA_LIST)), \
+				#normed=0, facecolor='blue', alpha=0.75)
+			#xlabel_str = 'Accumulated Coalescence Rank'
+			#plt.xlabel(xlabel_str, fontsize=24)
+			#plt.ylabel('Frequency', fontsize=24)
+			#title_str = 'Distribution of Accumulated Coalescence rank for couplets'
+			#plt.title(title_str, fontsize=24)
+			#plt.grid(True)
+			##plt.tight_layout()
+			#fig1.set_size_inches(10, 6)
+			#plt.savefig(AcR_Filename)
+		
+		## end comment - sourya
 			
+		#Entropy_Coal_Rank = Compute_Entropy(numpy.array(Coal_Rank_Complete_List), Output_Text_File)
+		
+		#if 1:	#(DEBUG_LEVEL >= 2):
+			#fp = open(Output_Text_File, 'a')
+			#fp.write('\n\n *** Computed entropy for the Coalescence rank information :  ' + str(Entropy_Coal_Rank) + '\n\n')
+			#fp.close()
+		
+		#Entropy_AcR = Compute_Entropy(numpy.array(AcR_Complete_List), Output_Text_File)
+		
+		#if 1:	#(DEBUG_LEVEL >= 2):
+			#fp = open(Output_Text_File, 'a')
+			#fp.write('\n\n *** Computed entropy for the Accumulated Coalescence rank information :  ' + str(Entropy_AcR) + '\n\n')
+			#fp.close()
+		
+		#fp = open(Output_Text_File, 'a')
+		#fp.write('\n\n *** Information gain :  ' + str(Entropy_AcR / Entropy_Coal_Rank) + '\n\n')
+		#fp.close()
+		
+		#-------------------------------------
+	# end add - sourya
+	#---------------------------
+	
 	"""
 	initially generate the output species tree as a star
 	covering all the taxa covered in the input gene trees

@@ -22,7 +22,13 @@ def DefineAccCoalRankXL(xl_val, no_of_taxa, lca_node_rank, \
 	# add the rank of the LCA node
 	sum_acc_rank = sum_acc_rank + lca_node_rank
 	
-	#--------------------------------------------------
+	##--------------------------------------------------
+	## add - sourya
+	#if (RANK_WRITE_DEBUG == 1):
+		#AcR_Complete_List.append(sum_acc_rank)
+		#Coal_Rank_Complete_List.append(lca_node_rank)
+	## end add - sourya
+	##--------------------------------------------------
 	# add - sourya
 	"""
 	If fractional rank information is sought, 
