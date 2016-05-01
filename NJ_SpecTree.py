@@ -59,6 +59,12 @@ def Fill_DistMat_CoalRankInfo(DistMat, METHOD_USED, ACC_RANK_DIST_MAT_TYPE):
 		elif (ACC_RANK_DIST_MAT_TYPE == 6):
 			DistMat[spec2_idx][spec1_idx] = min(TaxaPair_Reln_Dict[l]._GetMedianAccumulatedRank(), \
 				TaxaPair_Reln_Dict[l]._GetMultiModeAccumulatedRank())
+		elif (ACC_RANK_DIST_MAT_TYPE == 7):
+			DistMat[spec2_idx][spec1_idx] = (TaxaPair_Reln_Dict[l]._GetAvgAccumulatedRank() \
+				+ TaxaPair_Reln_Dict[l]._GetMultiModeAccumulatedRank()) / 2.0
+		elif (ACC_RANK_DIST_MAT_TYPE == 8):
+			DistMat[spec2_idx][spec1_idx] = min(TaxaPair_Reln_Dict[l]._GetAvgAccumulatedRank(), \
+				+ TaxaPair_Reln_Dict[l]._GetMultiModeAccumulatedRank())
 		# end add - sourya
 		
 		# symmetric property
@@ -101,6 +107,10 @@ def Fill_DistMat_ExcessGeneCount(DistMat, METHOD_USED, XL_DIST_MAT_TYPE):
 		elif (XL_DIST_MAT_TYPE == 6):
 			DistMat[spec2_idx][spec1_idx] = min(TaxaPair_Reln_Dict[l]._MedianXLVal(), \
 				TaxaPair_Reln_Dict[l]._GetMultiModeXLVal())
+		elif (XL_DIST_MAT_TYPE == 7):
+			DistMat[spec2_idx][spec1_idx] = (TaxaPair_Reln_Dict[l]._GetAvgXLVal() + TaxaPair_Reln_Dict[l]._GetMultiModeXLVal()) / 2.0
+		elif (XL_DIST_MAT_TYPE == 8):
+			DistMat[spec2_idx][spec1_idx] = min(TaxaPair_Reln_Dict[l]._GetAvgXLVal(), TaxaPair_Reln_Dict[l]._GetMultiModeXLVal())
 		# end add - sourya
 		
 		# symmetric property of the distance matrix
