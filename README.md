@@ -109,7 +109,8 @@ command descriptions:
 
 2) source_tree_input.txt : contains the input collection of gene trees
 
-3) -p option is for specifying the input tree format input file contains the trees in NEWICK format, as specified by the option (-p1) (1 stands for newick)
+3) -p option is for specifying the input tree format input file contains the trees in NEWICK format, 
+as specified by the option (-p1) (1 stands for newick)
 
 In addition, the package contains another option: -O 'output_file_name'
 
