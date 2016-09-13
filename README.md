@@ -75,7 +75,7 @@ Command line options
 ****************
 
 After downloading the current archieve in a zipped format, extracting the archieve generates the 
-folder AcRNJXL. Within that folder, there exists an executable file "AcRNJXL" (otherwise, user 
+folder "AcRNJXL_exec". Within that folder, there exists an executable file "AcRNJXL" (otherwise, user 
 needs to apply the executable permission on that file).
 
 Assuming that the current directory is within the folder AcRNJXL, following command is to be executed:
