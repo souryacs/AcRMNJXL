@@ -15,9 +15,11 @@ import time
 import os
 import numpy
 import sys
-import matplotlib.pyplot as plt	# comment - sourya
+#import matplotlib.pyplot as plt	# comment - sourya
 
-# This is the complete list of taxa covered in the input gene trees
+"""
+complete list of taxa covered in the input gene trees
+"""
 COMPLETE_INPUT_TAXA_LIST = []
 
 """ 
@@ -31,32 +33,17 @@ TaxaPair_Reln_Dict = dict()
 DEBUG_LEVEL = 0
 
 #---------------------------------
-"""
-various methods previously implemented for species tree generation
-currently only ProdAcRNJXL method is used 
-"""
-
-# accumulated coalescence rank with average statistics
+# using only accumulated coalescence rank for individual couplets
 AcRNJ = 1
 
-## accumulated coalescence rank with mode based statistics
-#AcRMNJ = 2
-
-# product of accumulated coalescence rank and extra lineage statistics
+# product of accumulated coalescence rank and excess gene count statistics
 ProdAcRNJXL = 2
-
-# minimum of accumulated coalescence rank and excess gene count
-RankAcRNJXL = 3
-
-# product of coalescence rank and extra lineage statistics
-ProdRNJXL = 4
-
-# minimum of accumulated coalescence rank and excess gene count
-RankRNJXL = 5
 #---------------------------------
 
-# variables used to denote whether we use traditional NJ method
-# or use a variant of it, namely the agglomerative clustering
+"""
+variables used to denote whether we use traditional NJ method
+or use a variant of it, namely the agglomerative clustering
+"""
 TRADITIONAL_NJ = 1	# it is used as the final version
 AGGLO_CLUST = 2
 
@@ -95,12 +82,17 @@ initially the information are obtained from the input source trees
 """
 class Reln_TaxaPair(object):  
 	def __init__(self):
-		# this is the count of trees for which the couplet is supported
-		self.tree_support_count = 0        
-		# this list contains the accumulated sum of ranks of the internal nodes
-		# present between individual couplets, for all the gene trees
+		"""
+		count of gene trees supporting the current couplet
+		"""
+		self.tree_support_count = 0
+		"""
+		List of AcR measures for this couplet, obtained from the gene trees supporing this couplet
+		"""
 		self.accumulated_rank_list = []
-		# this is the excess gene leaf count list for this couplet
+		"""
+		excess gene leaf count list for this couplet, with respect to the gene trees supporing this couplet
+		"""
 		self.XL_val_list = []            
 		"""
 		this is a variable containing the binned average of the XL values
@@ -120,18 +112,28 @@ class Reln_TaxaPair(object):
 		once the computation (for a couplet) is done, the value is subsequently used and returned
 		"""
 		self.binned_avg_AcR = -1
-		
-	# this function adds the count of tree if the input couplet is present in this tree
+
+	"""
+	adds the support tree count 
+	"""
 	def _IncrSupportTreeCount(self):
 		self.tree_support_count = self.tree_support_count + 1
-					
-	# this function returns the number of trees supporting the couplet
+	
+	"""
+	returns the number of trees supporting the couplet
+	"""
 	def _GetSupportTreeCount(self):
 		return self.tree_support_count        
-				
+	
+	"""
+	adds one XL measure corresponding to a gene tree
+	"""
 	def _AddXLVal(self, val):
 		self.XL_val_list.append(val)
 
+	"""
+	returns the average XL measure for all the supporting gene trees
+	"""
 	def _GetAvgXLVal(self):
 		if (self.avg_XL == -1):
 			self.avg_XL = (sum(self.XL_val_list) * 1.0) / self.tree_support_count
@@ -265,27 +267,22 @@ class Reln_TaxaPair(object):
 		return self.binned_avg_AcR
 
 	#-----------------------------------------------
-	# this function prints information for the current couplet
+	"""
+	this function prints information for the current couplet
+	"""
 	def _PrintTaxaPairRelnInfo(self, key, out_text_file, METHOD_USED):
 		fp = open(out_text_file, 'a')    
-		fp.write('\n taxa pair key: ' + str(key))
+		fp.write('\n\n **** taxa pair key: ' + str(key))
 		fp.write('\n supporting number of trees: ' + str(self._GetSupportTreeCount()))
 		if (METHOD_USED == AcRNJ):
 			#fp.write('\n *** Accumulated rank list: ' + str(sorted(self.accumulated_rank_list)))
 			fp.write('\n *** average accumulated rank : ' + str(self._GetAvgAccumulatedRank()))   
 			fp.write('\n *** median accumulated rank  : ' + str(self._GetMedianAccumulatedRank()))   
 			fp.write('\n *** mode accumulated rank  : ' + str(self._GetMultiModeAccumulatedRank()))   
-		elif (METHOD_USED == ProdAcRNJXL) or (METHOD_USED == RankAcRNJXL):
+		elif (METHOD_USED == ProdAcRNJXL):
 			fp.write('\n *** average accumulated rank  : ' + str(self._GetAvgAccumulatedRank()))   
 			fp.write('\n *** median accumulated rank  : ' + str(self._GetMedianAccumulatedRank()))   
 			fp.write('\n *** mode accumulated rank  : ' + str(self._GetMultiModeAccumulatedRank()))   
-			fp.write('\n *** average XL val : ' + str(self._GetAvgXLVal()))   
-			fp.write('\n *** median XL val : ' + str(self._MedianXLVal()))   
-			fp.write('\n *** mode XL val : ' + str(self._GetMultiModeXLVal()))   
-		elif (METHOD_USED == ProdRNJXL) or (METHOD_USED == RankRNJXL):
-			fp.write('\n *** average  coalescence rank : ' + str(self._GetAvgAccumulatedRank()))   
-			fp.write('\n *** median coalescence rank  : ' + str(self._GetMedianAccumulatedRank()))   
-			fp.write('\n *** mode coalescence rank  : ' + str(self._GetMultiModeAccumulatedRank()))   
 			fp.write('\n *** average XL val : ' + str(self._GetAvgXLVal()))   
 			fp.write('\n *** median XL val : ' + str(self._MedianXLVal()))   
 			fp.write('\n *** mode XL val : ' + str(self._GetMultiModeXLVal()))   

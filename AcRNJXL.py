@@ -23,8 +23,12 @@ V3.0 - 24.11.2015 - provided a new method using aggregated rank based excess gen
 										for species tree generation
 V4.0 - 22.01.2016 - Finalized a method incorporating the filtered average accumulated coalescence rank and excess gene leaf count 
 										based species tree inference.
+V5.0 - 01.05.2016 - Modified the code to incorporate filtered average AcR and XL measures for species tree construction.
+										Corresponds to the release 3.0
+V6.0 - 13.09.2016 - Used only accumulated coalescence rank with mode based filtered averaging, to infer the species tree
+										Produced better results than AcRNJXL
+										Also, recued running time for reading the input trees
 ''' 
-
 ## Copyright 2015, 2016 Sourya Bhattacharyya and Jayanta Mukherjee.
 ## All rights reserved.
 ##
@@ -68,16 +72,13 @@ def parse_options():
 				help="1 - input file format is NEWICK (default) \
 				2 - input file format is NEXUS")
 
-	#parser.add_option("-m", "--method", \
-				#type="int", \
-				#action="store", \
-				#dest="method_type", \
-				#default=1, \
-				#help="1 - average accumulated coalescence rank of the couplets (AcRNJ) (Default Method) \
-				#2 - product of accumulated coalescence rank with extra lineage information (ProdAcRNJXL) \
-				#3 - rank of accumulated coalescence rank and extra lineage (RankAcRNJXL) \
-				#4 - product of coalescence rank with extra lineage information (ProdRNJXL) \
-				#5 - rank of coalescence rank and extra lineage (RankRNJXL)")
+	parser.add_option("-m", "--method", \
+				type="int", \
+				action="store", \
+				dest="method_type", \
+				default=1, \
+				help="1 - Couplet based accumulated coalescence rank (AcRNJ) (Default Method) \
+				2 - Couplet based Accumulated Coalescence Rank with Excess Gene Count (AcRNJXL)")
 			
 	#parser.add_option("-n", "--njrule", \
 				#type="int", \
@@ -86,15 +87,6 @@ def parse_options():
 				#default=1, \
 				#help="1 - classical NJ method (Default) \
 				#2 - Normalized couplet statistic for agglomeration")     
-
-	#parser.add_option("-f", "--fractrank", \
-				#type="int", \
-				#action="store", \
-				#dest="frac_rank", \
-				#default=0, \
-				#help="Applied only for methods 1 to 3. It can have one of the below mentioned two values. \
-				#0 - Accumulated Coalescence rank in integers (default) \
-				#1 - Accumulated Coalescence rank in normalized fraction")
 
 	#parser.add_option("-c", "--coalrankmat", \
 				#type="int", \
@@ -124,14 +116,6 @@ def parse_options():
 				#7 - avg(avg, mode) of XL \
 				#8 - min(avg, mode) of XL")     
 			
-	#parser.add_option("-u", "--update", \
-				#type="int", \
-				#action="store", \
-				#dest="update_dist_mat", \
-				#default=1, \
-				#help="1 - Average of distance matrix divided by 2 \
-				#2 - Max of 2 operation")     
-	
 	parser.add_option("-r", "--ROOT", \
 			type="string", \
 			action="store", \
@@ -139,18 +123,10 @@ def parse_options():
 			default="", \
 			help="name of the taxon by which the tree can be rooted (outgroup based rooting)")
 			
-	#parser.add_option("-a", "--aggrank", \
-				#type="int", \
-				#action="store", \
-				#dest="Rank_Aggregate_Method_type", \
-				#default=1, \
-				#help="1 - lower sum of positional ranks (default) \
-				#2 - Mean reciprocal rank")     
-	
 	opts, args = parser.parse_args()
 	return opts, args
   
-##-----------------------------------------------------
+#-----------------------------------------------------
 # main function
 def main():  
 	opts, args = parse_options()
@@ -168,13 +144,10 @@ def main():
 	"""
 	employing the various species tree estimation methods along with parameter variations
 	"""
-	METHOD_USED = ProdAcRNJXL	#opts.method_type
+	METHOD_USED = opts.method_type
 	NJ_RULE_USED = TRADITIONAL_NJ	#opts.NJ_type
-	XL_DISTMAT_UPDATE_METHOD = 1	#opts.update_dist_mat
 	OUTGROUP_TAXON_NAME = opts.outgroup_taxon_name
-	FRACT_ACC_RANK = 1	#opts.frac_rank	#sourya
-	RANK_AGGREGATE_METHOD_TYPE = 1	#opts.Rank_Aggregate_Method_type	
-	
+	FRACT_ACC_RANK = 1
 	XL_DIST_MAT_TYPE = 7	#opts.dist_mat_type		#7 #1
 	ACC_RANK_DIST_MAT_TYPE = 7	#opts.acc_rank_mat_type	#7	#5
 	
@@ -183,6 +156,12 @@ def main():
 		return
 	else:
 		print 'input filename: ', INPUT_FILENAME
+
+	"""
+	convert the input filename to an absolute path of the filename
+	"""
+	INPUT_FILENAME = os.path.abspath(INPUT_FILENAME)
+	print '*** INPUT_FILENAME: ', INPUT_FILENAME
 
 	"""
 	according to the location of input filename
@@ -198,20 +177,25 @@ def main():
 		print 'dir_of_inp_file: ', dir_of_inp_file  
 
 	if (OUTPUT_FILENAME == ""):
-		## derive the output directory which will contain different output text results
-		#dir_of_curr_exec = dir_of_inp_file + 'AcRNJXL_C' + str(ACC_RANK_DIST_MAT_TYPE) + '_D' + str(XL_DIST_MAT_TYPE) \
-			#+ '_AM_' + str(AcR_MODE_PERCENT) + '_XM_' + str(XL_MODE_PERCENT)
-		dir_of_curr_exec = dir_of_inp_file + 'AcRNJXL'
-		
-		# output text file containing the results
-		Output_Text_File = dir_of_curr_exec + '/' + 'Complete_Desription.txt'
-		# create the directory
+		"""
+		derive the output directory and the output text file which will contain different output text results
+		"""
+		if (METHOD_USED == AcRNJ):
+			dir_of_curr_exec = dir_of_inp_file + 'AcRNJ'
+		else:
+			dir_of_curr_exec = dir_of_inp_file + 'AcRNJXL'
+
 		if (os.path.isdir(dir_of_curr_exec) == False):
 			mkdr_cmd = 'mkdir ' + dir_of_curr_exec
 			os.system(mkdr_cmd)
+
+		Output_Text_File = dir_of_curr_exec + '/' + 'Complete_Desription.txt'
 		print 'Output_Text_File: ', Output_Text_File      
+	
 	else:
-		# when we have specified the output file then corresponding directory becomes the dir_of_curr_exec
+		"""
+		here we have already specified the output species file name (and its corresponding directory)
+		"""
 		k1 = OUTPUT_FILENAME.rfind("/")
 		if (k1 == -1):
 			dir_of_curr_exec = './'
@@ -219,7 +203,6 @@ def main():
 			dir_of_curr_exec = OUTPUT_FILENAME[:(k1+1)]
 		Output_Text_File = OUTPUT_FILENAME + '_complete_text_description'   
 		print 'Output_Text_File: ', Output_Text_File
-		# create the directory
 		if (os.path.isdir(dir_of_curr_exec) == False):
 			mkdr_cmd = 'mkdir ' + dir_of_curr_exec
 			os.system(mkdr_cmd)               
@@ -242,9 +225,7 @@ def main():
 		for i in range(len(taxa_labels_curr_tree)):
 			if taxa_labels_curr_tree[i] not in COMPLETE_INPUT_TAXA_LIST:
 				COMPLETE_INPUT_TAXA_LIST.append(taxa_labels_curr_tree[i])
-	
 	#---------------------------------------------
-	
 	"""
 	from input trees, compute couplet based features - 1) accumulated coalescence rank, 2) excess gene leaf count
 	"""
@@ -342,15 +323,18 @@ def main():
 			star_net_str = star_net_str + ","
 	star_net_str = "(" + star_net_str + ")"
 
-	# this tree denotes the initial star configuration (rooted at the central hub)
+	"""
+	this tree denotes the initial star configuration (rooted at the central hub)
+	"""
 	Output_Tree = dendropy.Tree.get_from_string(star_net_str, schema="newick", \
 								preserve_underscores=PRESERVE_UNDERSCORE, \
 								default_as_rooted=True)          
 
-	fp = open(Output_Text_File, 'a')    
-	fp.write('\n star_net_str: ' + str(star_net_str))
-	fp.write('\n from tree ---: ' + Output_Tree.as_newick_string())
-	fp.close()
+	if 0:
+		fp = open(Output_Text_File, 'a')    
+		fp.write('\n star_net_str: ' + str(star_net_str))
+		fp.write('\n from tree ---: ' + Output_Tree.as_newick_string())
+		fp.close()
 
 	"""
 	This is the main function which will convert the star tree into the final binary species tree
@@ -358,8 +342,7 @@ def main():
 	with the features accumulated coalescence rank and excess gene leaf count
 	"""
 	Form_Species_Tree_NJ_Cluster(Output_Tree, COMPLETE_INPUT_TAXA_LIST, METHOD_USED, \
-		NJ_RULE_USED, Output_Text_File, XL_DIST_MAT_TYPE, XL_DISTMAT_UPDATE_METHOD, \
-			ACC_RANK_DIST_MAT_TYPE, RANK_AGGREGATE_METHOD_TYPE)
+		NJ_RULE_USED, Output_Text_File, XL_DIST_MAT_TYPE, ACC_RANK_DIST_MAT_TYPE)
 
 	# note the time
 	end_timestamp = time.time()      
@@ -368,7 +351,7 @@ def main():
 	fp.write('\n --- output species tree (in newick format): ' + Output_Tree.as_newick_string())    
 	fp.close()
 
-	out_treefilename = dir_of_curr_exec + '/' + 'outtree_newick.tre'
+	out_treefilename = dir_of_curr_exec + '/' + 'outtree_Newick.tre'
 
 	"""
 	write the species tree in the specified output file
