@@ -102,10 +102,26 @@ Upon using the package, user should cite the following papers:
 For any queries, please contact
 ---------------------------
 
-Sourya Bhattacharyya 
-Department of Computer Science and Engineering
-Indian Institute of Technology Kharagpur
+1) Sourya Bhattacharyya 
+
+Postdoctoral Researcher
+
+La Jolla Institute for Allergy and Immunology
+
+La Jolla, CA 92037, USA
+
 <sourya.bhatta@gmail.com>
+
+
+2) Jayanta Mukherjee
+
+Department of Computer Science and Engineering
+
+Indian Institute of Technology Kharagpur
+
+<jay@cse.iitkgp.ernet.in>
+
+
 
 
 
