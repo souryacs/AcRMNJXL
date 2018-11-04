@@ -1,23 +1,12 @@
-*********************************
-AcRNJ and AcRNJXL
-*********************************
+AcRNJ(XL) (species tree estimation using Accumulated coalescence Rank and optionally eXcess gene Lineage, with Neighbor Joining)
+------------------
 
-******************************
-Species tree estimation using either one or both of the following parameters:
+AcRNJ(XL) is a python based tool for computing species tree from a set of incongruent gene trees with Incomplete Lineage Sorting (ILS). AcRNJ proposes a novel couplet based distance measure, termed as the "accumulated coalescence rank" (AcR), 
+to create a distance matrix, and construct a phylogenetic tree using NJ based species tree estimation method. The method 
+is termed as AcRNJ.
 
-1) accumulated coalescence rank (primary feature)
-2) excess gene leaf count
-******************************
-
-AcRNJ / AcRNJXL is a python based tool for computing species tree from a set of incongruent gene trees 
-with Incomplete Lineage Sorting (ILS).
-
-AcRNJ uses the accumulated coalescence rank for individual couplets, to construct a distance matrix, 
-which is then used in the NJ based method to generate the species tree.
-
-AcRNJXL uses both accumulated coalescence rank and the excess gene leaf count, for  individual 
-couplets, to construct two different distance matrices. These matrices are then employed for NJ 
-method based species tree generation.
+A second feature, termed as the excess gene leaf count (XL), is also computed for individual couplets, and can 
+be used together with the AcR measure. Using both AcR and XL measures lead to a method named AcRNJXL.
 
 Description
 -----------------------
@@ -26,61 +15,40 @@ Input
 -----------
 
 A collection of gene trees with overlapping set of species (from which the genes are sampled), having topological incongruence 
-due to Incomplete Lineage Sorting (ILS). Gene trees may or may not be weighted; both AcRNJ and AcRNJXL
-do not use the branch lengths of the gene trees for species tree estimation.
+due to Incomplete Lineage Sorting (ILS). Gene trees may or may not be weighted; both AcRNJ and AcRNJXL do not use the branch lengths of the gene trees for species tree estimation.
 
-Input gene trees can be either in NEWICK format or in NEXUS format. 
-However, all the gene trees should have identical input formats. They should be placed in a 
-standard tree list file, according to the syntax of NEXUS or NEWICK formats. Such a tree list 
-text file is to be provided as an input of this executable.
+Input gene trees can be either in NEWICK format or in NEXUS format. However, all the gene trees should have identical input formats. They should be placed in a standard tree list file, according to the syntax of NEXUS or NEWICK formats. Such a tree list text file is to be provided as an input of this executable.
 
 Output
 --------
 
-A species tree covering all the taxa of the gene trees. Output species tree 
-is generated in the NEWICK format.
+A species tree covering all the taxa of the gene trees. Output species tree is generated in the NEWICK format.
 
-*********************************
-Dependencies
-*********************************
+Installation
+--------------
 
-AcRNJ / AcRNJXL is developed in Linux Systems (Ubuntu 14.04), using Python 2.7. It is tested and meant for systems 
-having linux OS (Fedora / Ubuntu).
-
-User needs to install following before using this package:
+AcRNJ / AcRNJXL is developed in Linux Systems (Ubuntu 14.04), using Python 2.7. It is tested and meant for systems having linux OS (Fedora / Ubuntu). User can download the zipped archieve from GitHub, or clone the current repository. User needs to install following before using this package:
 
 1) Python 2.7 (available in Ubuntu, by default) 
 
-Note: We have not tested the code on Python 3. Any user having Python 3 environment need to 
-check the correct execution of our code, and optionally needs to upgrade it accordingly.
-We plan to support Python 3 environment in some future release.
+Note: Current version does not support python 3, and a feature release is planned to cover it.
 
 2) Dendropy 3.12.0 ( available on the link: https://pythonhosted.org/DendroPy/ ) 
 
-Note: there is a new release of Dendropy 4.0 but we have used 3.12.0 for the implementation. We 
-did not upgrade the code for Dendropy 4.0 support, so any user having this new version of Dendropy 
-might need to check the functionalities of AcRNJ / AcRNJXL and possibly upgrade / replace / edit few 
-Dendropy related functions. So, we recommend users to use the earlier version 
-of Dendropy, to avoid any conflict.
-
-Support for Dendropy 4 and corresponding update of code will be done in a future release.
+Note: Future release is planned to cover the latest release of Dendropy, since Dendropy 4.0 (and onwards) made significant 
+changes in their repositories.
 
 3) Numpy ( available on the link: http://www.numpy.org/ )
 
-User can install Numpy using pip (python software downloader tool) module, which contains the latest 
-Numpy module in it. We found that Numpy module in the traditional apt-get repository is of lower version.
+User can install Numpy using pip (python software downloader tool) module, which contains the latest version.
 
-***************
+
 Command line options
-****************
+--------------
 
-After downloading the current archieve in a zipped format, extracting the archieve generates the 
-folder "AcRNJXL_exec". Within that folder, there exists an executable file "AcRNJXL" (otherwise, user 
-needs to apply the executable permission on that file).
+The python file "AcRNJXL.py" is the main executable. User should execute the file with the following command:
 
-Assuming that the current directory is within the folder AcRNJXL, following command is to be executed:
-
-./AcRNJXL [options]
+python AcRNJXL.py [options]
 
 Details of the options are mentioned below:
 
@@ -88,11 +56,11 @@ Details of the options are mentioned below:
 
 -I INP_FILENAME, --INPFILE=INP_FILENAME
 
-                name of the input file containing gene trees
+	name of the input file containing gene trees
 
 -O OUT_FILENAME, --OUTFILE=OUT_FILENAME
 
-                name of the output file to contain target species tree
+	name of the output file to contain target species tree
 
 -m METHOD_type, --METHOD=METHOD_type
 
@@ -101,46 +69,38 @@ Details of the options are mentioned below:
 
 -p INP_FILE_FORMAT, --inpform=INP_FILE_FORMAT
 
-                1 - input file format is NEWICK (default)
-                2 - input file format is NEXUS
+	1 - input file format is NEWICK (default)
+	2 - input file format is NEXUS
 
 -r TAXON_NAME, --ROOT=TAXON_NAME
 
-		User can specify a taxon name to root the output species tree with that specified taxon.
+	User can specify a taxon name to root the output species tree with that specified taxon. Useful to benchmark the 
+	generated tree with respect to a given rooting configuration.
 
 Example of a command (followed for the results published in the manuscript)
 
-./AcRNJXL -I source_tree_input.txt -p1 -m1
+python AcRNJXL.py -I source_tree_input.txt -O 'output_file_name' -p1 -m1 -r "target_root_taxon_sample"
 
-command descriptions:
+The method = 1 means AcRNJ will be used. Else the method AcRNJXL will be invoked.
 
-1) -I specifies the input filename
+If the output file name is not specified, a folder of name either "AcRNJ" (if the method = 1) or “AcRNJXL” (if method = 2) 
+is created. A file named 'outtree_newick.tre' within the specified output directory contains the output species tree. 
+A separate output log file 'Complete_Desription.txt' within the given output folder contains the detailed execution of the 
+current method.
 
-2) source_tree_input.txt : contains the input collection of gene trees
 
-3) -p option is for specifying the input tree format input file contains the trees in NEWICK format, 
-as specified by the option (-p1) (1 stands for newick)
+Citation
+-----------
 
-4) The method AcRNJ is to be executed, since the -m option is set as 1.
+Upon using the package, user should cite the following papers:
 
-In addition, the package contains another option: -O 'output_file_name'
+1) Sourya Bhattacharyya, Jayanta Mukhopadhyay, Accumulated Coalescence Rank and Excess Gene Count for Species Tree Inference, proceedings of 3rd International Conference on Algorithms for Computational Biology (AlCoB), Trujillo, Spain, Springer LNBI 9702, pp. 93-105. 
 
-Here, user can specify the output file name containing the derived species tree file.
+2) Sourya Bhattacharyya, Jayanta Mukhopadhyay, Couplet Supertree based Species Tree Estimation  from Incongruent Gene Trees with Deep Coalescence, proceedings of 11th International Symposium on Bioinformatics Research and Applications (ISBRA), Virginia, USA, June 2015, Springer LNBI 9096, pages 48-59.
 
-the species tree can be rooted using a custom provided taxon, by using the option '-r'. 
-Although AcRNJXL creates a rooted tree, custom tree rooting can be provided using this option.
 
-If the method (-m option) is provided as 1, a folder "AcRNJ" is created within the same directory 
-containing the input treelist file. If the method (-m option) is set as 2, a directory “AcRNJXL” is created 
-instead. 
-
-Within this new created directory, one file 'outtree_newick.tre' is created, which contains the derived species tree. 
-Another text file named 'Complete_Desription.txt' is created, which contains execution and runtime information 
-for the method. 
-
-*********************************
 For any queries, please contact
-*********************************
+---------------------------
 
 Sourya Bhattacharyya 
 Department of Computer Science and Engineering
